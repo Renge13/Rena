@@ -13,6 +13,31 @@ ruling C: email IDENTITY, no password-based account], price section
 replaced by the launch-decisions pointer. Names corrected to the 08-02 locked set.
 Voice sweep to the composed register still pending at authoring time.
 
+THE PRODUCT MODEL RULED 2026-09-07 (night), verbatim in docs/prompts/X-compat-2b1.md and in
+PROGRESS.md's RULED 2026-09-07 (night). THREE RULINGS, and the first two change this document's
+shape rather than its wording:
+
+1. PERSON B GETS NOTHING. "Compatibility is a single product that Person A purchases using two
+   people's birth data. The output is one Compatibility Reading about the relationship. Person B
+   gets: no mirror, no individual reading, no link, no notification, no account, no information sent
+   to them. Her birth data is used only as the second input to the compatibility calculation. Do not
+   expose or create a user-facing B mirror flow."
+
+2. COMPATIBILITY IS A FIRST-CLASS ENTRY POINT. "The Katon front door should have two clear product
+   paths: Mirror - understand yourself. Compatibility - understand the dynamic between two people.
+   A user who only wants Compatibility should not have to generate or pay for a Mirror reading
+   first. The Compat pre-payment flow must not require an AI Mirror render. Give Compatibility its
+   own route/entry point now. Do not create it as a secondary 'Upcoming' item under Mirror."
+
+3. NO FREE COMPAT RESULT. "No free P0 reading, no named relation tease, and no Gemini render before
+   payment. The pre-payment Compat flow should be deterministic/static and cheap. The AI
+   compatibility report is generated only after successful payment. This supersedes the previous P0
+   idea entirely."
+
+SO P0 IS SUPERSEDED - see its own section below, which is struck rather than deleted because the
+2026-08-02 decision trail explains what it was for. The only pre-payment computation is the
+solar-term boundary check, run for BOTH people. P1-P5 and P7 stand; P6 stays descoped; P8 later.
+
 RULING C APPLIED 2026-09-07 (Reyner, verbatim in docs/prompts/W-compat-1.md and PROGRESS.md's
 RULED 2026-09-07): email-only identity, NOT a conventional account. The two places this file said
 "account + email created at first compat checkout" now say "email identity created/associated" - the
@@ -56,21 +81,49 @@ literal score.
 
 ## THE PAID JOURNEY (descending hook, relational payoffs)
 
-Assume (funnel corrected 08-02 to match the decided paywall placement): user has read their free
-mirror, hit "how compatible are you with someone?", and entered the second person's birth date
-(+ optional hour). **P0 shows FREE. The paywall sits between P0 and P1.** **Email identity is created/associated at
+**THE ENTRY ASSUMPTION IS SUPERSEDED, 2026-09-07 (night), ruling 2.** It read: "user has read their
+free mirror, hit 'how compatible are you with someone?', and entered the second person's birth
+date". Compat is now a FIRST-CLASS ENTRY POINT - a user who only wants Compatibility does not have
+to generate or pay for a Mirror reading first, and the pre-payment flow must not require an AI
+Mirror render. A buyer may arrive from her mirror (the pair then carries `a_reading_id`) or straight
+off the front door with no reading at all.
+
+**AND THE PAYWALL NO LONGER SITS BETWEEN P0 AND P1, because there is no P0** (ruling 3). Payment
+comes first; the whole report is behind it. **Email identity is created/associated at
 first compat checkout; no password-based account is required** (ruling C, Reyner 2026-09-07): email
 is collected at checkout, transactionally framed, the purchase and report are associated with it, and
 access is provided through a secure link. No passwords, login, reset-password or sessions. The mirror
 itself stays anonymous.
 
-### P0 — The pairing reveal (the FREE tease — decided 08-02, option c)
-Both cards, side by side. Two archetype faces at a glance, PLUS exactly ONE named relational fact
+### ~~P0 — The pairing reveal (the FREE tease — decided 08-02, option c)~~ **SUPERSEDED 2026-09-07 (night)**
+
+> **No free P0 reading, no named relation tease, and no Gemini render before payment. The
+> pre-payment Compat flow should be deterministic/static and cheap. The AI compatibility report is
+> generated only after successful payment. This supersedes the previous P0 idea entirely.**
+> — Reyner, 2026-09-07
+
+**WHAT REPLACES IT: nothing pre-payment except a boundary question.** The only computation before
+payment is the solar-term check (`/api/season-check`), run for BOTH people, because a boundary
+birth changes the chart and the buyer must answer it before paying for a reading of the wrong
+chart. The pre-payment surface is a static product block - description, price, inclusions - and
+that is X-b3's work.
+
+**THE STRUCK TEXT IS KEPT because the 2026-08-02 decision trail explains what P0 was for**, and a
+later session proposing a free tease should be able to see that it was tried, decided, and then
+superseded rather than never considered:
+
+~~Both cards, side by side. Two archetype faces at a glance, PLUS exactly ONE named relational fact
 with zero explanation (e.g. the seat relation named, not read). The machine proves it sees
-something relational; the explanation is what is behind the paywall.
-"[You, Embun] × [Her, Permata]." The comparison card is itself shareable PRE-PAYMENT ("look how
-different we are") — it is the compat product's own acquisition engine. No prose. This is the P0
-dopamine hit, and the itch the paywall converts.
+something relational; the explanation is what is behind the paywall. "[You, Embun] x [Her,
+Permata]." The comparison card is itself shareable PRE-PAYMENT ("look how different we are") - it is
+the compat product's own acquisition engine. No prose. This is the P0 dopamine hit, and the itch the
+paywall converts.~~
+
+**AND THE ACQUISITION ARGUMENT IS THE THING THAT WAS TRADED AWAY, not overlooked.** P0's whole case
+was that the comparison card is compat's own acquisition engine. Ruling 3 gives that up in exchange
+for no Gemini spend before payment and no free relational claim. If share-driven acquisition turns
+out to matter more than the render cost, this is the paragraph to re-open - with a ruling, not a
+revert.
 
 ### P1 — "How your two cores meet" (Day Master × Day Master)
 One tight fact: do your Day Masters combine, support, or clash?

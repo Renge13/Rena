@@ -26,6 +26,7 @@ a shareable card out. Target: Indonesian women, mid-20s to 40s.
   49.000 in `lib/pricing.js` has found this ruling, not a defect. The ladder itself lives in
   `docs/product/paid-product-map.md` `## RULED 2026-08-29`, never here — rule 8.)
 - Later: annual reading, parent→child, luck-pillar map. See `docs/product/paid-product-map.md`.
+- **Principle (ruled 2026-09-07):** a personality product with a rigorous calculation engine underneath. The engine's job is to prevent bullshit; the presentation's job is to give the user something clear enough to believe, remember, and talk about.
 
 ## STACK
 

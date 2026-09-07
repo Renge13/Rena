@@ -213,6 +213,7 @@ a later session can tell "deferred with a reason" from "forgotten". Every row ve
 | Deferred | What it is | What unblocks it |
 |---|---|---|
 | **Compatibility** | The v1 money engine per CLAUDE.md. Not built | **Sourcing 天干五合**, the five stem combinations, which are step 2 of the classical workflow the compat spec follows. `grep -rn "甲己\|乙庚\|丙辛\|丁壬\|戊癸" lib/ tests/` -> **0** on 2026-08-13. The only substantive hit anywhere is Indonesian prose in `docs/archive/calcdump-CxD.md:45` — not a table, not code. (Scope the grep to `lib/ tests/`: across `docs/` it now also matches this row and COWORK-BRIEF's, so a docs-wide count measures the registers, not the engine. Searching the NAME `天干五合` returns zero everywhere and will mislead you — search the five pairs.) **BOTH BLOCKERS ARE ANSWERED, 2026-09-07 — see RULED 2026-09-07.** (1) 天干五合 is **SOURCED**: Joey Yap, *Hack Your Destiny With BaZi* p.11, plus 《黄帝内经·素问·五运行大论》. It lands in `lib/compat/stemRelation.js` at commit 4 of prompt W, as detection + transformation-target METADATA only, never as 合化 — ruling B. The grep above still reads **0** in `lib/ tests/` on **2026-09-07** (re-run: `grep -rn "甲己|乙庚|丙辛|丁壬|戊癸" lib/ tests/` -> no hits, exit 1), so this row measures an unbuilt engine right up to the commit that builds it. (2) The **CROSS-CHART ORACLE** question is CLOSED by ruling A, and closed by narrowing the claim rather than by finding an oracle: Joey's plotter is still single-chart (probed 2026-08-12) and there is still no pair oracle. Ruling A approves **detection** — the repo's own tested 六合 / 冲 / 害 / 刑 tables read with two-chart inputs, verifiable as table agreement — and keeps **interpretation** out of the engine entirely. COWORK-BRIEF section 4's rule is satisfied, not waived: the half with no oracle is the half the engine is forbidden to compute |
+| **The spouse star — HIGH-VALUE v1 CANDIDATE, added 2026-09-07** | Classically, one person's Day Master being the other's spouse star (正官/七殺 for her, 正財/偏財 for him) is a marriage-affinity signal. It would add a clause **2.1.e** to PULL in `docs/product/compat-p4-p5-rules.md`. **NOT IMPLEMENTED**, and deliberately not in prompt X-a | **Two authorities, the same bar 天干五合 had to clear** (rule 4). One check is already done and it came back NEGATIVE: **Joey Yap, *Hack Your Destiny With BaZi*, checked 2026-09-07, does NOT state it** (Cowork fetched it; the text carries the stem and branch relation tables at p.11 and no spouse-star rule). So this row needs two sources found, not one confirmation added. **Reyner ruled it a high-value v1 candidate on 2026-09-07** — deferred, and promoted while deferred, which is a different status from the rows below it and is why it is at the top |
 | **Email capture at checkout** | Recovery and delivery channel. Today the reading URL is the only address Katon holds, and checkout asks for nothing (`d81434a` removed the WhatsApp field) | A register call on the wording plus a column. Also **required by the compat spec**, which creates an email identity at the first compat CHECKOUT while the mirror stays anonymous. **ANSWERED FOR COMPAT ONLY, 2026-09-07 (ruling C):** email-only identity, no password, no login, no sessions, access by secure link — so the "column" is settled in shape and the compat spec now says so. **STILL OPEN, and it is Reyner's call, not a commit's:** whether the existing **Rp 19.000** checkout gains an email field, and the `/privasi` wording that has to move with it. Ruling C is about the COMPAT checkout; reading it as a site-wide answer would put an email field on a live paid path nobody ruled on |
 | **Server-side conversion counters** | Nothing records funnel steps. `d81434a` removed a required field between intent and checkout with no instrumentation to see the effect | A build. **This BLOCKS the 25-45k price test CLAUDE.md requires** — a price test with no conversion measurement is a coin toss with extra steps. Note the /privasi correction under this table |
 | **`Promise.all` on the rate-limit dimensions, and folding `season-check` into the mirror POST — BOTH RETIRED BY MEASUREMENT, 2026-09-05. NOT deferred, and NOT forgotten.** | **WHAT THEY WERE.** Two latency fixes ranked behind the region change in `docs/qa/2026-09-05-production-submit-split.md`. (a) `consume()` awaits its two dimensions in series (`lib/ratelimit.js:196`, `:212`), one Supabase RPC each, so `Promise.all` would remove one round trip. (b) `POST /api/season-check` is a whole extra client round trip before the create, so folding its answer onto the mirror POST's response would remove it. **WHY THEY ARE RETIRED RATHER THAN PARKED: THEY WERE RANKED AGAINST A 2,776ms WAIT AND THE WAIT IS NOW 240.5ms.** `63d6488` put the functions in `sin1`, the database's own AWS region. Measured after (`docs/qa/2026-09-05-region-move-both-legs.md`): one intra-region round trip costs **~46ms** where it cost 283-1,131ms trans-Pacific, and `season-check` costs **51.2ms** where it cost 269.3ms. So (a) now saves **~46ms** of a 240.5ms path and (b) saves **~51ms** — and (b) is the LARGER of the two, having swapped places, because it removes a client-to-function hop rather than a server-to-database one and a real device's network hop shortens but does not vanish. **The move did not reduce the NUMBER of round trips; it made each nearly free, and three cheap round trips are approximately one cheap round trip.** Neither mechanism is wrong and neither is deleted from the code's future — what is gone is the magnitude that justified doing them. **AND REYNER'S ACCEPTANCE RULE IS NO LONGER TRIGGERED EITHER**: *"if a path's measured production latency exceeds ~1 second, the UI carries an unmistakably active waiting state"* — at 240.5ms warm the condition is false, so PR2's step 4 waiting-state work is not required on latency grounds. **This does not repeal that rule**, which stands at `components/Funnel.jsx`'s `disabled={busy}` site; it records that what would invoke it is currently absent | **NOTHING. THAT IS THE POINT OF THE ROW.** These are not waiting on a decision, a build or a price — they are answered. **What would REOPEN them is a change that makes a round trip expensive again**, and there is exactly one on the horizon: **a migration off Vercel that lands the service outside Singapore.** `docs/qa/2026-09-05-workers-compatibility-spike.md` makes "the Render service must be in Singapore" the first line of the migration brief for this reason. If that requirement is ever missed, these two items come back with their old magnitudes and this row is the record of why |
@@ -915,6 +916,61 @@ all, and the measured answer is 0 of 13 with identical importances. The row exis
 also said the move would be *"expected, NOT
 the re-coupling tripwire firing"*, which would have authorised dismissing a genuine alarm. **A
 prediction that tells a reader what to disregard must carry its grep.**
+
+## RULED 2026-09-07 (evening) — P4 badge layer, P5 accepted, product principle
+
+Reyner, 2026-09-07 (evening), released as `docs/prompts/X-compat-2a.md` (commit `73c7839`). The
+rule the engine implements is `docs/product/compat-p4-p5-rules.md`, landed in this same commit; it
+is the source `lib/compat/temperament.js` and `lib/compat/pullFit.js` cite by section number. Four
+quoted blocks, verbatim.
+
+**P4 — a verdict layer, and the crude version REFUSED.**
+
+> P4 should NOT be facts-only A. I want a verdict/badge layer. [...] I do not want your original B
+> formula of same God / same group = colliding, different group = complementary. That is too crude
+> and not something we can substantiate. Instead, use a Katon-owned classification based on the
+> deterministic relationship between the two dominant Ten-God profiles: same God -> Matching
+> Pattern; same Ten-God family/group -> Related Pattern; different group -> Contrasting Pattern. The
+> engine should expose the underlying facts (`same_god`, `same_group`, `different_group`) and the
+> content layer can render the badge and interpretation. Important wording boundary: these badges
+> are Katon's interpretive framework, not claims that classical BaZi explicitly defines these three
+> relationship categories. The customer should therefore get both: (1) the factual identity of each
+> person's dominant Aspek, and (2) a clear relationship verdict/badge derived from those facts.
+
+**WHAT WAS REFUSED IS THE PART WORTH KEEPING.** Cowork's option B mapped same-group to "colliding"
+and different-group to "complementary" — a fit verdict dressed as a fact. Reyner's replacement keeps
+the same three deterministic inputs and strips the evaluation out of them: matching / related /
+contrasting describe a RELATIONSHIP SHAPE and rank nothing, which is rule 25 holding. The wording
+boundary is not a disclaimer either: the three patterns are Katon's framework, and content that
+says classical BaZi defines them would be making a claim no source supports.
+
+**P5 — accepted as written.**
+
+> P5 remains accepted as written
+
+That is the PULL / FIT booleans in `docs/product/compat-p4-p5-rules.md` section 2, **including
+clash 冲 counted as PULL** (2.1.b — intensity is attraction, not fit) and harm 害 / punishment 刑
+lowering FIT (2.2.c).
+
+**Spouse star — deferred, and promoted while deferred.**
+
+> Keep the sourcing requirement, but mark it as high-value v1 candidate.
+
+**THE PRODUCT PRINCIPLE.**
+
+> Don't build Katon like a cautious astrology calculator. Build it like a personality product with a
+> rigorous calculation engine underneath. The engine's job is to prevent bullshit. The
+> presentation's job is to give the user something clear enough to believe, remember, and talk
+> about.
+
+Folded into `CLAUDE.md`'s PRODUCT section as one line in the same commit, in Reyner's words. It is
+the first entry in that section that is about POSTURE rather than about what is sold, and it is
+there because it decides arguments the price ladder cannot: P4's badge layer exists because of it.
+
+**SEVEN INDONESIAN STRINGS ARE UNRULED AND SHIP AS `@@UNRULED@@`.** Three P4 badge names
+(`p4_matching`, `p4_related`, `p4_contrasting`) and four P5 quadrant labels (`p5_q1`..`p5_q4`).
+Reyner rules Indonesian register; the engine emits ids and the content layer holds the words, so
+nothing in `lib/compat/` carries a placeholder. They are listed as owed in `docs/NEXT.md`.
 
 ## RULED 2026-09-07 — compat rulings A/B/C, and compat now GATES LAUNCH
 

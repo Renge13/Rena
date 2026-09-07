@@ -29,6 +29,7 @@
     "test:engine-copy": "node --test tests/engine-copy-language.spec.mjs",
     "test:compat-branch-relations": "node --test tests/compat-branch-relations.spec.mjs",
     "test:compat-complementarity": "node --test tests/compat-complementarity.spec.mjs",
+    "test:compat-stem-relation": "node --test tests/compat-stem-relation.spec.mjs",
     "test:stage3": "node --test tests/stage3-facts.spec.mjs",
     "test:stage3-hierarchy": "node --test tests/stage3-hierarchy.spec.mjs",
     "test:stage3-contract": "node --test tests/stage3-contract.spec.mjs",

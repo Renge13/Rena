@@ -1,0 +1,10 @@
+{
+  "_rule": "天干五合. THE ONE SOURCE OF TRUTH for the five stem combinations. lib/compat/stemRelation.js reads this file and carries no table of its own. Provenance, both sources quoted verbatim, and the fetch record are in stem-combinations.md beside this file. RULING B (Reyner, 2026-09-07): detection plus transformation-target METADATA only. transformTarget is never read to transform a Day Master or recalculate an element; whether 合 actually transforms is outside this MVP engine. Rule 4: re-derive from the sources in the .md, never from a copy in a prompt. Elements are the engine's English keys - Indonesian display names are the semantic layer's job.",
+  "pairs": [
+    { "stems": ["甲", "己"], "pinyin": "Jia + Ji", "transformTarget": "Earth" },
+    { "stems": ["乙", "庚"], "pinyin": "Yi + Geng", "transformTarget": "Metal" },
+    { "stems": ["丙", "辛"], "pinyin": "Bing + Xin", "transformTarget": "Water" },
+    { "stems": ["丁", "壬"], "pinyin": "Ding + Ren", "transformTarget": "Wood" },
+    { "stems": ["戊", "癸"], "pinyin": "Wu + Gui", "transformTarget": "Fire" }
+  ]
+}

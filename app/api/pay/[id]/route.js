@@ -1,4 +1,7 @@
 import { getReading, setInvoice } from '@/lib/readingStore';
+import { getPair, setPairInvoice } from '@/lib/pairStore';
+import { COMPAT_COPY } from '@/lib/site/copy';
+import { compatEmail, resolveCheckoutTarget } from '@/lib/pair/checkout';
 import { createQrisInvoice } from '@/lib/xendit';
 import { priceFor, isSellable, DEFAULT_SKU, SELLABLE_SKUS } from '@/lib/pricing';
 import { recordEvent } from '@/lib/analytics/events';
@@ -46,9 +49,23 @@ export const runtime = 'nodejs';
 // APPROVED BY REYNER, 2026-08-22. He had approved `Complete Edition` as a product NAME
 // on 2026-08-03 (the EN tier layer) and had not seen it as a statement line; it was
 // flagged here for exactly that reason, and the flag is now closed. The wording is his.
+//
+// ── `compat` IS UNRULED AND THAT IS DELIBERATE, 2026-09-07 ──
+// It comes from `COMPAT_COPY.invoiceDesc` as an `@@UNRULED@@` sentinel, so
+// `scripts/check-unruled-copy.mjs` (wired as `prebuild`) REFUSES a production
+// build until Reyner rules it. Preview and local builds pass on purpose - he has
+// to see it in context to rule it.
+//
+// WHY NOT GUESS ONE. The history above is three supersessions of this exact
+// surface, two of them for reasons a guess would have repeated: English on an
+// Indonesian buyer's bank statement, and borrowing the free product's own word.
+// Guessing here has a measured track record of being wrong, and the alternative
+// to a sentinel was holding the whole payment path on one string.
 const INVOICE_DESCRIPTION = {
   artifact: 'Katon - Complete Edition',
+  compat: COMPAT_COPY.invoiceDesc,
 };
+
 
 // POST /api/pay/[id]   body: { sku?, wa_number? }
 // Creates the Xendit QRIS invoice (external_id = reading id).
@@ -64,8 +81,6 @@ export async function POST(request, { params }) {
   if (fence) return notConfigured(`payment_not_configured:${fence}`);
 
   const { id } = await params;
-  const row = await getReading(id);
-  if (!row) return notFound();
   // The `row.domain` requirement is GONE. It gated checkout on the pre-pivot
   // domain reading; paid is no longer a domain reading, and the mirror is
   // ungated by design, so a reading with no domain is the normal case now.
@@ -87,11 +102,43 @@ export async function POST(request, { params }) {
 
   const sku = body?.sku ?? DEFAULT_SKU;
   if (!isSellable(sku)) {
-    // `compat` AND `annual` land here on purpose: both are priced (the ladder
-    // ruled 2026-08-29) and neither is built, so neither has anything to deliver.
-    // September's demand test SHOWS both prices and records interest; showing a
-    // price must never create a checkout. See lib/pricing.js SELLABLE_SKUS.
+    // `annual` lands here on purpose: it is priced (the ladder ruled 2026-08-29)
+    // and not built, so it has nothing to deliver. September's demand test SHOWS
+    // both prices and records interest; showing a price must never create a
+    // checkout. `compat` became sellable 2026-09-07 - see lib/pricing.js.
     return badRequest(`sku must be one of: ${SELLABLE_SKUS.join(', ')}`);
+  }
+
+  // ── WHICH OBJECT IS BEING BOUGHT ──────────────────────────
+  // `compat` buys a PAIR; everything else buys a reading. The id namespaces are
+  // separate tables, so the sku decides which one to resolve rather than trying
+  // both and taking whatever answers - a reading id presented with `sku=compat`
+  // is a caller error and is refused, not silently resolved as a reading.
+  const isCompat = sku === 'compat';
+
+  // The decision is in lib/pair/checkout.js so it is testable - no spec here
+  // imports an app/api route, because Next's `@/` alias does not resolve under
+  // `node --test`. The READING branch is unchanged: `getReading` is still the
+  // only lookup for every other sku.
+  const target = resolveCheckoutTarget(
+    sku,
+    isCompat ? await getPair(id) : null,
+    await getReading(id),
+  );
+  if (target.kind === 'error') {
+    return target.status === 404 ? notFound() : badRequest(target.error);
+  }
+  // The row itself is not needed past this point - it never was. Before compat,
+  // `getReading` was called purely to 404 an unknown id, and the pre-pivot
+  // `row.domain` gate that used it was removed at the promotion. The resolution
+  // above is the existence check.
+
+  // Ruling C: email-only identity, collected AT checkout and nowhere else.
+  let email = null;
+  if (isCompat) {
+    const checked = compatEmail(body?.email);
+    if (checked.error) return badRequest(checked.error);
+    email = checked.email;
   }
 
   try {
@@ -111,12 +158,29 @@ export async function POST(request, { params }) {
       readingId: id,
       amount: priceFor(sku),
       description: INVOICE_DESCRIPTION[sku],
-      successRedirectUrl: readingUrl(id, '?bayar=selesai'),
-      failureRedirectUrl: readingUrl(id),
+      // ── COMPAT GETS NO REDIRECT YET, AND THAT IS A STATED GAP ──
+      // `readingUrl` builds `/r/<token>`. Handing it a PAIR id would send the
+      // buyer to a reading URL for an object that is not a reading - a 404 at
+      // best, and at worst the exact confusion the "person B is never a reading"
+      // ruling exists to prevent.
+      //
+      // The right destination is the report page, and it does not exist: X-b3
+      // owns the surface and prompt X-b1's own outline says the route name is
+      // "Reyner's - placeholder". So pointing at a guess would either 404 today
+      // or bake in a route name he has not chosen. Omitting them leaves the
+      // buyer's last screen on Xendit, which is the thing these two parameters
+      // were added to fix - so this is a REGRESSION IN THE COMPAT PATH ONLY,
+      // accepted because there is no UI in this prompt at all and no reader can
+      // reach a compat checkout yet. **X-b3 must set both.** Flagged in the PR.
+      ...(isCompat ? {} : {
+        successRedirectUrl: readingUrl(id, '?bayar=selesai'),
+        failureRedirectUrl: readingUrl(id),
+      }),
     });
     // The sku is stored with the invoice so the webhook can verify the settled
     // amount against THIS product's price rather than against any known price.
-    await setInvoice(id, { invoiceId, waNumber, sku });
+    if (isCompat) await setPairInvoice(id, { invoiceId, invoiceUrl, sku, email });
+    else await setInvoice(id, { invoiceId, waNumber, sku });
 
     // COUNTED AFTER THE INVOICE EXISTS, never before. An attempt that failed to
     // create an invoice is not a started checkout, and counting one would inflate
@@ -132,7 +196,8 @@ export async function POST(request, { params }) {
       // report pending so the funnel shows the pending state. Unlock still requires
       // the verified webhook (triggered manually in dev). Structurally unreachable in
       // production — the fence above already refused before we got here.
-      await setInvoice(id, { waNumber, sku });
+      if (isCompat) await setPairInvoice(id, { sku, email });
+      else await setInvoice(id, { waNumber, sku });
       return json({ ok: true, pending: true, invoiceUrl: null, dev: true });
     }
     return json({ error: 'invoice_failed' }, 502);

@@ -1,4 +1,6 @@
 import { getReading, markReadingPaid, claimWaSend, releaseWaSend } from '@/lib/readingStore';
+import { getPair } from '@/lib/pairStore';
+import { settlePair } from '@/lib/pair/settle';
 import { recordEvent } from '@/lib/analytics/events';
 import { verifyCallbackToken, getInvoice, PAID_STATUSES } from '@/lib/xendit';
 import { amountMatchesSku } from '@/lib/pricing';
@@ -76,6 +78,21 @@ export async function POST(request) {
   }
 
   if (!readingId) return badRequest('missing external_id');
+
+  // ── ONE BRANCH FOR THE PAIR, AND THE READING PATH IS NOT RESTRUCTURED ──
+  // `external_id` is a reading id or a pair id; they are separate tables, so the
+  // id is resolved against `pair` FIRST and the existing reading path runs
+  // unchanged when that misses. Ordering it this way rather than the other way
+  // round is deliberate: a pair hit is unambiguous, whereas trying `reading`
+  // first and falling through would make a future id collision resolve as the
+  // wrong product, and this is the one route that grants access.
+  const pairRow = await getPair(readingId);
+  if (pairRow) {
+    // settlePair calls markPairPaid and NOTHING else, so a compat invoice can
+    // never reach the reading path below. lib/pair/settle.js carries the rules.
+    await settlePair(readingId, pairRow, statusPaid, settledAmount);
+    return json({ received: true });
+  }
 
   const row = await getReading(readingId);
   if (!row) return json({ received: true }); // unknown id — ack so Xendit stops retrying
@@ -159,3 +176,4 @@ export async function POST(request) {
 
   return json({ received: true });
 }
+

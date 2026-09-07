@@ -70,23 +70,38 @@ test('list is the anchor and never below launch', () => {
 
 // ── THE FENCE ───────────────────────────────────────────────
 
-test('PRICING A THING IS NOT SELLING IT — compat and annual are priced and unsellable', () => {
-  // THE ASSERTION THAT FAILS WITHOUT COMMIT 1's RESTRAINT. `annual` was added to
-  // SKUS and deliberately left off SELLABLE_SKUS, because September's demand test
-  // must SHOW both prices without either becoming purchasable.
+test('PRICING A THING IS NOT SELLING IT — annual is priced and unsellable', () => {
+  // THE ASSERTION THAT FAILS WITHOUT THE RESTRAINT. `annual` was added to SKUS and
+  // deliberately left off SELLABLE_SKUS, because September's demand test must SHOW
+  // both prices without either becoming purchasable.
+  //
+  // ── `compat` MOVED OUT OF THIS TEST 2026-09-07, AND THE TEST DID NOT WEAKEN ──
+  // It used to assert compat unsellable too. Prompt X-b1 builds the pair, the
+  // checkout, the verified paid flip and `GET /api/pair/[id]`, so compat now has
+  // something to deliver and the fence opens for the reason it was closed. The
+  // PRINCIPLE is unchanged and `annual` still proves it: a priced product with no
+  // fulfillment must not be purchasable. Deleting the test along with compat's row
+  // in it would have removed the principle's only remaining witness.
   assert.ok(SKUS.compat, 'compat must be priced');
   assert.ok(SKUS.annual, 'annual must be priced');
-  assert.equal(isSellable('compat'), false);
-  assert.equal(isSellable('annual'), false);
+  assert.equal(isSellable('annual'), false, 'annual is not built: nothing to deliver');
+  assert.equal(isSellable('compat'), true, 'compat delivers facts via GET /api/pair/[id]');
 });
 
-test('exactly one SKU is sellable, and it is the artifact', () => {
-  // Written as an EQUALITY, not a `.includes`, so adding a sellable SKU has to
-  // be a deliberate edit to this line. `/api/pay` 400s on anything not in this
+test('exactly TWO SKUs are sellable, and annual is not one of them', () => {
+  // Still written as an EQUALITY, not a `.includes`, so adding a sellable SKU has
+  // to be a deliberate edit to this line. `/api/pay` 400s on anything not in this
   // list (route.js: `if (!isSellable(sku)) return badRequest(...)`), so widening
   // it silently is how an unbuilt product starts taking money.
-  assert.deepEqual(SELLABLE_SKUS, ['artifact']);
+  //
+  // It read `['artifact']` until 2026-09-07 and the heading said "exactly one".
+  // Both moved in the same edit as SELLABLE_SKUS itself, which is the point of
+  // writing it as an equality: the list cannot grow without this line and this
+  // heading both being changed on purpose.
+  assert.deepEqual(SELLABLE_SKUS, ['artifact', 'compat']);
   assert.equal(isSellable('artifact'), true);
+  assert.equal(isSellable('compat'), true);
+  assert.equal(isSellable('annual'), false);
   assert.equal(DEFAULT_SKU, 'artifact');
   assert.ok(isSellable(DEFAULT_SKU), 'the default SKU must itself be sellable');
 });

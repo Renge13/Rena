@@ -163,3 +163,136 @@ they are good for, and it is enough to see that 2.2.a is inert and that q2 and q
 Re-run the command at the top of this file after any change to
 `docs/product/compat-p4-p5-rules.md` or to `lib/compat/`, and add the new table here rather than
 overwriting this one.
+
+---
+
+# SECOND RUN, 2026-09-07 — six rule sets on the same seed and the same 5000 pairs
+
+**STILL MEASUREMENT ONLY. NOTHING IN `lib/` CHANGED AND NO RULE MOVED.** V0 is computed by the
+shipped `compatPullFit`; V1 to V5 are computed inside the script, locally, from the same three fact
+objects. They are hypotheticals for Reyner to rule on or discard.
+
+## THE COMMAND AND THE SEED
+
+```
+$ node scripts/compat-base-rates.mjs --charts 2000 --pairs 5000 --variants
+```
+
+**Seed `20260907`, the same default as the first run**, and the same 2000 charts and 5000 ordered
+pairs. The RNG is untouched by the variant code — charts and pair indices are drawn in exactly the
+same order either way — so the first run's table above still reproduces byte-identically from this
+version of the script (`diff` clean). **The columns are therefore comparable pair for pair, not
+across two draws.** The variant run is itself reproducible: two consecutive runs are byte-identical.
+
+## THE RULE SETS
+
+| | rule |
+|---|---|
+| **V0** | current rule |
+| **V1** | drop 2.1.d entirely |
+| **V2** | 2.1.d restricted to the other person's MONTH branch only (`from.position === 'month'`, either direction) |
+| **V3** | V1 + 2.2.c extended so palace 害/刑 also lower fit |
+| **V4** | V3 + 2.2.a replaced by "a supplier exists for the receiver's RANK-0 favourable element, in at least one direction" |
+| **V5** | V3 + 2.2.a replaced by "supply in BOTH directions" |
+
+## THE TABLE
+
+```
+charts=2000 pairs=5000 seed=20260907
+
+        q1              q2              q3              q4          pull hi   fit hi   rule
+  V0   3315  66.3%     428   8.6%    1088  21.8%     169   3.4%    74.9%    88.1%   current rule
+  V1   1136  22.7%     101   2.0%    3267  65.3%     496   9.9%    24.7%    88.1%   drop 2.1.d
+  V2   2117  42.3%     241   4.8%    2286  45.7%     356   7.1%    47.2%    88.1%   2.1.d = month branch only
+  V3    555  11.1%     682  13.6%    1566  31.3%    2197  43.9%    24.7%    42.4%   V1 + palace harm/punishment lower fit
+  V4    555  11.1%     682  13.6%    1565  31.3%    2198  44.0%    24.7%    42.4%   V3 + 2.2.a = rank-0 supplier, either direction
+  V5    555  11.1%     682  13.6%    1562  31.2%    2201  44.0%    24.7%    42.3%   V3 + 2.2.a = supply in BOTH directions
+
+STANDALONE FIRE RATES              count      rate
+  palace 害/刑 present                 2863     57.3%
+  2.2.a ruled (either direction)     5000    100.0%
+  2.2.a rank-0 (either direction)    4976     99.5%
+  2.2.a both directions              4993     99.9%
+  2.1.a alone                           0      0.0%
+  2.1.b alone                           0      0.0%
+  2.1.c alone                         136      2.7%
+  2.1.d alone                        2506     50.1%
+```
+
+## FINDINGS — FLAGGED, NOT ACTED ON
+
+**1. TIGHTENING 2.2.a DOES NOT RESCUE IT. Both proposed replacements are also inert.** This is the
+answer to the first run's finding 1, and it is not the answer that finding invited. The ruled form
+holds on 100.0% of pairs; "rank-0 supplier, either direction" holds on **99.5%**; "supply in BOTH
+directions" holds on **99.9%**. V3, V4 and V5 differ by at most 4 pairs in 5000 — q1 is 555 in all
+three. So 2.2.a cannot be fixed by tightening it in either of the two ways proposed: **it is not
+that the threshold is too loose, it is that element presence across two whole charts is almost never
+absent.** If FIT is to depend on supply at all it needs a different quantity, not a stricter cut on
+this one. Dropping the clause is the other honest option. Reyner's call.
+
+**2. 2.1.a AND 2.1.b NEVER FIRE ALONE — 0 of 5000 each.** So under V0, deleting either changes no
+verdict at all: a day-branch 六合 or 冲 always also shows up in the palace scans, because the day
+branch is one of the eight pairings 2.1.d reads. **This was found by accident and then measured on
+purpose, which is the part worth recording.** A deliberate corruption of the script's local V0 that
+removed 2.1.b produced NO guard failure even at 5000 pairs, and the honest reading of a silent
+guard is either "the guard is broken" or "the perturbation is invisible". It was the second, and the
+sole-clause counts now in the table prove it rather than leaving it inferred. The arithmetic closes
+exactly: 2.1.d fires 3607, 2.1.c-alone is 136, and 3607 + 136 = 3743 = every pull-high pair.
+
+The consequence is NOT "delete them". Under V1 and V3, where 2.1.d is gone, 2.1.a and 2.1.b become
+the clauses carrying pull. **They are redundant only in the presence of 2.1.d**, which is itself the
+clause under question.
+
+**3. 2.1.d is the whole of pull, quantified.** Dropping it (V1) takes pull-high from 74.9% to 24.7%
+and moves q1 from 66.3% to 22.7%. Restricting it to the other person's month branch (V2) lands in
+between: pull-high 47.2%, q1 42.3%. So V2 is a real dial rather than a rounding of V0 — if the goal
+is "pull should discriminate", V2 keeps a palace signal while halving its reach.
+
+**4. EXTENDING 2.2.c IS BY FAR THE BIGGEST SINGLE LEVER, and it may be too big.** Palace 害/刑 is
+present on **57.3%** of pairs, so folding it into 2.2.c (V3) takes fit-high from 88.1% to 42.4%.
+Combined with V1's pull that puts **43.9% of pairs in q4** — "little there" — and q1 at 11.1%. That
+is the mirror image of V0's problem rather than a fix for it: V0 tells two thirds of readers q1, V3
+tells nearly half q4. **The distribution nobody has ruled on is the one where all four quadrants
+carry real weight**, and V3 combined with V2's narrowed 2.1.d rather than V1's deletion is the
+combination NOT measured here. It was not measured because it was not asked for; adding it is a
+one-line variant.
+
+## THE GUARDS, AND ALL FOUR WERE DRIVEN RED ON PURPOSE
+
+Two guards were added for the variants and both were shown failing before the table was believed.
+
+**A. The local V0 must equal the shipped module, pair for pair.** Without this, V1 to V5 would be
+deltas off a V0 that was never the real rule. Removing 2.1.d from the script's local V0:
+
+```
+Error: INVARIANT BREACH: local V0 disagrees with lib/compat/pullFit.js on pair 2
+  (1966-01-31 09:11 x 1968-12-30 23:24): local low/high/q3 vs module high/high/q1
+```
+
+**Its sensitivity limit is recorded rather than hidden:** the same guard did NOT fire when 2.1.b was
+removed from local V0, even at 5000 pairs. That is finding 2 — the perturbation is genuinely
+invisible — but it means this guard catches a drift only when the drifted clause changes some
+verdict. **It is not a proof that the local V0 is textually identical to the module.**
+
+**B. Monotonicity, asserted per pair rather than in aggregate** (an aggregate check can be satisfied
+by two errors cancelling). Dropping or narrowing a pull clause can only remove pull; extending 2.2.c
+or tightening 2.2.a can only remove fit. So V1.pull implies V2.pull implies V0.pull; V1, V3, V4 and
+V5 must share one pull verdict; V3.fit implies V0.fit; V4.fit and V5.fit each imply V3.fit. Wiring
+V3 with 2.1.d still in its pull list:
+
+```
+Error: INVARIANT BREACH on pair 2: V3 pull high != V1 pull low
+```
+
+**C and D** are the first run's two guards, unchanged and still passing: the known-answer selftest
+(`selftest: 6/6 known quadrants reproduced`) and the arithmetic check, which now also runs per
+variant for all six rule sets — quadrants summing to M, `q1+q2` equalling pull-high, `q1+q3`
+equalling fit-high.
+
+## THE CAVEAT, UNCHANGED AND STILL LOAD-BEARING
+
+**These are rates over RANDOM pairs, not couples.** Every number above describes the shape of the
+clause space, not Katon's traffic, which does not exist for compat yet. A variant that looks
+balanced here could still land badly on real submissions. What the table is good for is exactly what
+it shows: which clauses are inert, which one carries all the weight, and how far each dial actually
+moves the distribution.

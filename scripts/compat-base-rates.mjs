@@ -34,6 +34,31 @@
 // by hand, so the pipeline here is checked against known answers, not only
 // against itself. **The selftest has been shown failing on purpose** - see the
 // QA doc this generates.
+//
+// ── --variants: WHAT SIX RULE SETS WOULD DO TO THE SAME PAIRS ──
+// `--variants` prints the quadrant distribution under six rule sets on the SAME
+// seed and the SAME sample, so the columns are comparable pair for pair rather
+// than across two draws.
+//
+// **NOTHING IN lib/ CHANGES AND NO RULE MOVES.** V0 is computed by the SHIPPED
+// `compatPullFit`; V1-V5 are computed here, locally, from the same three fact
+// objects. They are hypotheticals for Reyner to rule on or discard.
+//
+// THE GUARD THAT MAKES THE DELTAS MEAN ANYTHING: the local variant engine also
+// computes V0, and every pair asserts that its local V0 equals the shipped
+// module's output exactly. If the local machinery has drifted from the rule, the
+// V0 column disagrees with the module and the run throws - so V1-V5 cannot be
+// read as deltas off a V0 that was never the real rule.
+//
+// PLUS THE MONOTONICITY THE VARIANTS MUST OBEY, asserted per pair, not in
+// aggregate. Dropping or narrowing a pull clause can only remove pull; extending
+// 2.2.c or tightening 2.2.a can only remove fit. So:
+//   V1.pull => V2.pull => V0.pull      (V1 clauses subset V2 subset V0)
+//   V3.fit  => V0.fit                  (2.2.c extended)
+//   V4.fit  => V3.fit, V5.fit => V3.fit (2.2.a tightened)
+//   V1/V3/V4/V5 pull are IDENTICAL     (same pull rule)
+// A variant implemented backwards fails these rather than printing a plausible
+// column.
 // ============================================================
 
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
@@ -97,12 +122,87 @@ const QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 const PATTERNS = ['matching', 'related', 'contrasting'];
 const RELATIONS = ['same_god', 'same_group', 'different_group'];
 
+// ── the clause building blocks, over the tranche-1 fact objects ──
+// Each reads exactly what the corresponding ruled clause reads. The 2.1.a/b/c
+// blocks and 2.2.b are shared by every variant; only the marked ones differ.
+
+const dayRelationsOf = (branches) => branches.dayBranchPair.map((e) => e.relation);
+const palaceOf = (branches) => [...branches.bHitsASpousePalace, ...branches.aHitsBSpousePalace];
+
+/** 2.1.a — dayBranchPair contains harmony 六合 */
+const pull_a = ({ branches }) => dayRelationsOf(branches).includes('六合');
+/** 2.1.b — dayBranchPair contains clash 冲 (counted as pull on purpose) */
+const pull_b = ({ branches }) => dayRelationsOf(branches).includes('冲');
+/** 2.1.c — combination present (Day Masters are a 天干五合 pair) */
+const pull_c = ({ stems }) => 'combination' in stems;
+/** 2.1.d — ANY palace entry is harmony or clash. V0 and V2 only. */
+const pull_d = ({ branches }) => palaceOf(branches)
+  .some((e) => e.relation === '六合' || e.relation === '冲');
+/**
+ * 2.1.d restricted to the other person's MONTH branch (V2).
+ * In both scans `from` is the other person and `to` is the day branch being hit,
+ * so "the other person's month branch" is `from.position === 'month'` in either
+ * direction.
+ */
+const pull_d_month = ({ branches }) => palaceOf(branches)
+  .some((e) => e.from.position === 'month' && (e.relation === '六合' || e.relation === '冲'));
+
+/** 2.2.a as ruled — a supplier in EITHER direction. V0, V1, V2, V3. */
+const fit_a_either = ({ comp }) => comp.aSupplies !== null || comp.bSupplies !== null;
+/** 2.2.a variant — the supplier must serve the receiver's RANK-0 favourable element (V4). */
+const fit_a_rank0 = ({ comp }) => [comp.aSupplies, comp.bSupplies]
+  .some((s) => s !== null && s.receiver_favourable_rank === 0);
+/** 2.2.a variant — supply in BOTH directions (V5). */
+const fit_a_both = ({ comp }) => comp.aSupplies !== null && comp.bSupplies !== null;
+
+/** 2.2.b — sameImbalance empty. Unchanged in every variant. */
+const fit_b = ({ comp }) => comp.sameImbalance.length === 0;
+
+/** 2.2.c as ruled — no 害 and no 刑 on the DAY PAIR only. */
+const fit_c_day = ({ branches }) => {
+  const day = dayRelationsOf(branches);
+  return !day.includes('害') && !day.includes('刑');
+};
+/** 2.2.c extended — palace 害/刑 lower fit too (V3, V4, V5). */
+const fit_c_day_palace = (facts) => fit_c_day(facts)
+  && !palaceOf(facts.branches).some((e) => e.relation === '害' || e.relation === '刑');
+
+/** Standalone: does ANY palace entry carry 害 or 刑? Reported on its own. */
+const palaceHarmOrPunishment = ({ branches }) => palaceOf(branches)
+  .some((e) => e.relation === '害' || e.relation === '刑');
+
+/**
+ * The six rule sets. `pull` and `fit` are lists of predicates: pull is a
+ * DISJUNCTION (2.1, any), fit is a CONJUNCTION (2.2, all).
+ */
+const VARIANTS = {
+  V0: { note: 'current rule', pull: [pull_a, pull_b, pull_c, pull_d], fit: [fit_a_either, fit_b, fit_c_day] },
+  V1: { note: 'drop 2.1.d', pull: [pull_a, pull_b, pull_c], fit: [fit_a_either, fit_b, fit_c_day] },
+  V2: { note: '2.1.d = month branch only', pull: [pull_a, pull_b, pull_c, pull_d_month], fit: [fit_a_either, fit_b, fit_c_day] },
+  V3: { note: 'V1 + palace harm/punishment lower fit', pull: [pull_a, pull_b, pull_c], fit: [fit_a_either, fit_b, fit_c_day_palace] },
+  V4: { note: 'V3 + 2.2.a = rank-0 supplier, either direction', pull: [pull_a, pull_b, pull_c], fit: [fit_a_rank0, fit_b, fit_c_day_palace] },
+  V5: { note: 'V3 + 2.2.a = supply in BOTH directions', pull: [pull_a, pull_b, pull_c], fit: [fit_a_both, fit_b, fit_c_day_palace] },
+};
+const VARIANT_IDS = Object.keys(VARIANTS);
+
+/** Apply one rule set to one pair's facts. */
+function applyVariant({ pull, fit }, facts) {
+  const pullHigh = pull.some((clause) => clause(facts));
+  const fitHigh = fit.every((clause) => clause(facts));
+  return {
+    pull: pullHigh ? 'high' : 'low',
+    fit: fitHigh ? 'high' : 'low',
+    quadrant: pullHigh ? (fitHigh ? 'q1' : 'q2') : (fitHigh ? 'q3' : 'q4'),
+  };
+}
+
 /** Every compat fact for one ordered pair. The modules, unmodified. */
 function evaluate(a, b) {
   const branches = compatBranchRelations(a, b);
   const complementarity = compatComplementarity(a, b);
   const stems = compatStemRelation(a, b);
   return {
+    facts: { branches, comp: complementarity, stems },
     pullFit: compatPullFit(branches, complementarity, stems),
     temperament: compatTemperament(a, b),
   };
@@ -127,6 +227,25 @@ function tally({ charts, pairs, seed }) {
     fitHigh: 0,
   };
 
+  // Variant tallies. The RNG is untouched by this - charts and pair indices are
+  // drawn in exactly the same order whether or not variants are reported - so a
+  // --variants run reproduces the V0 numbers of a plain run on the same seed.
+  const variant = Object.fromEntries(VARIANT_IDS.map((id) => [id, {
+    quadrant: Object.fromEntries(QUADRANTS.map((q) => [q, 0])),
+    pullHigh: 0,
+    fitHigh: 0,
+  }]));
+  const standalone = {
+    'palace 害/刑 present': 0,
+    '2.2.a ruled (either direction)': 0,
+    '2.2.a rank-0 (either direction)': 0,
+    '2.2.a both directions': 0,
+  };
+  // How often each pull clause is the ONLY one firing. This is the number that
+  // explains a V0-vs-V1 gap: a clause that never fires alone can be deleted
+  // without moving a single V0 verdict, however often it "fires".
+  const soleClause = { '2.1.a alone': 0, '2.1.b alone': 0, '2.1.c alone': 0, '2.1.d alone': 0 };
+
   for (let n = 0; n < pairs; n += 1) {
     let i = Math.floor(rand() * built.length);
     let j = Math.floor(rand() * built.length);
@@ -134,7 +253,42 @@ function tally({ charts, pairs, seed }) {
     // couple and would inflate same_god and 自刑 for free.
     while (j === i) j = Math.floor(rand() * built.length);
 
-    const { pullFit, temperament } = evaluate(built[i].chart, built[j].chart);
+    const { facts, pullFit, temperament } = evaluate(built[i].chart, built[j].chart);
+
+    // ── the six rule sets, on this same pair ──
+    const applied = Object.fromEntries(
+      VARIANT_IDS.map((id) => [id, applyVariant(VARIANTS[id], facts)]),
+    );
+
+    // THE GUARD ON THE WHOLE VARIANT TABLE: the local V0 must equal the shipped
+    // module, pair for pair. Without this, V1-V5 would be deltas off a V0 that
+    // was never the real rule.
+    if (applied.V0.quadrant !== pullFit.quadrant
+      || applied.V0.pull !== pullFit.pull
+      || applied.V0.fit !== pullFit.fit) {
+      throw new Error(
+        `INVARIANT BREACH: local V0 disagrees with lib/compat/pullFit.js on pair ${n} `
+        + `(${built[i].birth.birthDate} ${built[i].birth.birthTime} x `
+        + `${built[j].birth.birthDate} ${built[j].birth.birthTime}): `
+        + `local ${applied.V0.pull}/${applied.V0.fit}/${applied.V0.quadrant} vs `
+        + `module ${pullFit.pull}/${pullFit.fit}/${pullFit.quadrant}`,
+      );
+    }
+
+    assertVariantMonotonicity(applied, n);
+
+    for (const id of VARIANT_IDS) {
+      variant[id].quadrant[applied[id].quadrant] += 1;
+      if (applied[id].pull === 'high') variant[id].pullHigh += 1;
+      if (applied[id].fit === 'high') variant[id].fitHigh += 1;
+    }
+
+    if (pullFit.pull_reasons.length === 1) soleClause[`${pullFit.pull_reasons[0]} alone`] += 1;
+
+    if (palaceHarmOrPunishment(facts)) standalone['palace 害/刑 present'] += 1;
+    if (fit_a_either(facts)) standalone['2.2.a ruled (either direction)'] += 1;
+    if (fit_a_rank0(facts)) standalone['2.2.a rank-0 (either direction)'] += 1;
+    if (fit_a_both(facts)) standalone['2.2.a both directions'] += 1;
 
     counts.quadrant[pullFit.quadrant] += 1;
     if (pullFit.pull === 'high') counts.pullHigh += 1;
@@ -146,7 +300,8 @@ function tally({ charts, pairs, seed }) {
   }
 
   assertInvariants(counts, pairs);
-  return { counts, built };
+  for (const id of VARIANT_IDS) assertVariantInvariants(id, variant[id], pairs);
+  return { counts, built, variant, standalone, soleClause };
 }
 
 /**
@@ -185,6 +340,52 @@ function assertInvariants(counts, pairs) {
   }
 }
 
+/**
+ * The logical relations the six rule sets MUST obey, checked per pair rather than
+ * in aggregate - an aggregate check can be satisfied by two errors cancelling.
+ *
+ * Dropping or narrowing a pull clause can only REMOVE pull. Extending 2.2.c or
+ * tightening 2.2.a can only REMOVE fit. A variant wired backwards - a predicate
+ * negated, the wrong clause list - fails here instead of printing a plausible
+ * column.
+ */
+function assertVariantMonotonicity(v, n) {
+  const fail = (msg) => { throw new Error(`INVARIANT BREACH on pair ${n}: ${msg}`); };
+  const high = (x) => x === 'high';
+
+  // V1's clauses are a subset of V2's, which are a subset of V0's.
+  if (high(v.V1.pull) && !high(v.V2.pull)) fail('V1 pull high but V2 pull low');
+  if (high(v.V2.pull) && !high(v.V0.pull)) fail('V2 pull high but V0 pull low');
+
+  // V1, V3, V4 and V5 share one pull rule, so their pull must be identical.
+  for (const id of ['V3', 'V4', 'V5']) {
+    if (v[id].pull !== v.V1.pull) fail(`${id} pull ${v[id].pull} != V1 pull ${v.V1.pull}`);
+  }
+
+  // 2.2.c extended can only lower fit; V0, V1 and V2 share the ruled 2.2.c.
+  if (v.V1.fit !== v.V0.fit) fail('V1 and V0 share the fit rule but disagree');
+  if (v.V2.fit !== v.V0.fit) fail('V2 and V0 share the fit rule but disagree');
+  if (high(v.V3.fit) && !high(v.V0.fit)) fail('V3 fit high but V0 fit low');
+
+  // 2.2.a tightened can only lower fit, both ways it is tightened.
+  for (const id of ['V4', 'V5']) {
+    if (high(v[id].fit) && !high(v.V3.fit)) fail(`${id} fit high but V3 fit low`);
+  }
+}
+
+/** Same arithmetic as assertInvariants, per variant. */
+function assertVariantInvariants(id, v, pairs) {
+  const fail = (msg) => { throw new Error(`INVARIANT BREACH [${id}]: ${msg}`); };
+  const sum = Object.values(v.quadrant).reduce((a, b) => a + b, 0);
+  if (sum !== pairs) fail(`quadrants sum to ${sum}, not ${pairs}`);
+  if (v.quadrant.q1 + v.quadrant.q2 !== v.pullHigh) {
+    fail(`q1+q2=${v.quadrant.q1 + v.quadrant.q2} but pull high=${v.pullHigh}`);
+  }
+  if (v.quadrant.q1 + v.quadrant.q3 !== v.fitHigh) {
+    fail(`q1+q3=${v.quadrant.q1 + v.quadrant.q3} but fit high=${v.fitHigh}`);
+  }
+}
+
 const pct = (n, of) => `${((n / of) * 100).toFixed(1)}%`;
 
 function report({ counts }, { charts, pairs, seed }) {
@@ -213,6 +414,29 @@ function report({ counts }, { charts, pairs, seed }) {
   lines.push('P4 PATTERN                        count      rate');
   for (const p of PATTERNS) {
     lines.push(`  ${p}${' '.repeat(32 - p.length)}${String(counts.pattern[p]).padStart(6)}  ${pct(counts.pattern[p], pairs).padStart(8)}`);
+  }
+  return lines.join('\n');
+}
+
+function reportVariants({ variant, standalone, soleClause }, { charts, pairs, seed }) {
+  const lines = [];
+  lines.push(`charts=${charts} pairs=${pairs} seed=${seed}`);
+  lines.push('');
+  lines.push('SIX RULE SETS, SAME SEED AND SAME 5000 PAIRS');
+  lines.push('');
+  lines.push('        q1              q2              q3              q4          pull hi   fit hi   rule');
+  for (const id of VARIANT_IDS) {
+    const v = variant[id];
+    const cell = (q) => `${String(v.quadrant[q]).padStart(5)} ${pct(v.quadrant[q], pairs).padStart(6)}`;
+    lines.push(
+      `  ${id}  ${cell('q1')}   ${cell('q2')}   ${cell('q3')}   ${cell('q4')}   `
+      + `${pct(v.pullHigh, pairs).padStart(6)}   ${pct(v.fitHigh, pairs).padStart(6)}   ${VARIANTS[id].note}`,
+    );
+  }
+  lines.push('');
+  lines.push('STANDALONE FIRE RATES              count      rate');
+  for (const [name, count] of Object.entries({ ...standalone, ...soleClause })) {
+    lines.push(`  ${name}${' '.repeat(Math.max(1, 33 - name.length))}${String(count).padStart(6)}  ${pct(count, pairs).padStart(8)}`);
   }
   return lines.join('\n');
 }
@@ -253,5 +477,8 @@ if (process.argv.includes('--selftest')) {
     pairs: arg('pairs', DEFAULTS.pairs),
     seed: arg('seed', DEFAULTS.seed),
   };
-  console.log(report(tally(opts), opts));
+  const result = tally(opts);
+  console.log(process.argv.includes('--variants')
+    ? reportVariants(result, opts)
+    : report(result, opts));
 }

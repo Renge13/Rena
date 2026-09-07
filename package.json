@@ -73,6 +73,7 @@
     "probe:card-export": "node scripts/probe-card-export.mjs",
     "serve:reports": "node scripts/serve-reports.mjs",
     "report:engine": "node tests/bazi-engine.report.mjs",
+    "report:compat-base-rates": "node scripts/compat-base-rates.mjs",
     "report:forge": "node --conditions=react-server scripts/forge-tests.mjs",
     "gallery:rejections": "node --env-file-if-exists=.env.local --conditions=react-server scripts/rejection-gallery.mjs",
     "probe:sheen": "node scripts/probe-sheen.mjs",

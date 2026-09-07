@@ -212,8 +212,8 @@ a later session can tell "deferred with a reason" from "forgotten". Every row ve
 
 | Deferred | What it is | What unblocks it |
 |---|---|---|
-| **Compatibility** | The v1 money engine per CLAUDE.md. Not built | **Sourcing 天干五合**, the five stem combinations, which are step 2 of the classical workflow the compat spec follows. `grep -rn "甲己\|乙庚\|丙辛\|丁壬\|戊癸" lib/ tests/` -> **0** on 2026-08-13. The only substantive hit anywhere is Indonesian prose in `docs/archive/calcdump-CxD.md:45` — not a table, not code. (Scope the grep to `lib/ tests/`: across `docs/` it now also matches this row and COWORK-BRIEF's, so a docs-wide count measures the registers, not the engine. Searching the NAME `天干五合` returns zero everywhere and will mislead you — search the five pairs.) **And an oracle that can verify a CROSS-CHART claim** — Joey's plotter is single-chart (probed 2026-08-12), so COWORK-BRIEF section 4's rule bites: what has no oracle cannot be implemented |
-| **Email capture at checkout** | Recovery and delivery channel. Today the reading URL is the only address Katon holds, and checkout asks for nothing (`d81434a` removed the WhatsApp field) | A register call on the wording plus a column. Also **required by the compat spec**, which creates account + email at the first compat CHECKOUT while the mirror stays anonymous |
+| **Compatibility** | The v1 money engine per CLAUDE.md. Not built | **Sourcing 天干五合**, the five stem combinations, which are step 2 of the classical workflow the compat spec follows. `grep -rn "甲己\|乙庚\|丙辛\|丁壬\|戊癸" lib/ tests/` -> **0** on 2026-08-13. The only substantive hit anywhere is Indonesian prose in `docs/archive/calcdump-CxD.md:45` — not a table, not code. (Scope the grep to `lib/ tests/`: across `docs/` it now also matches this row and COWORK-BRIEF's, so a docs-wide count measures the registers, not the engine. Searching the NAME `天干五合` returns zero everywhere and will mislead you — search the five pairs.) **BOTH BLOCKERS ARE ANSWERED, 2026-09-07 — see RULED 2026-09-07.** (1) 天干五合 is **SOURCED**: Joey Yap, *Hack Your Destiny With BaZi* p.11, plus 《黄帝内经·素问·五运行大论》. It lands in `lib/compat/stemRelation.js` at commit 4 of prompt W, as detection + transformation-target METADATA only, never as 合化 — ruling B. The grep above still reads **0** in `lib/ tests/` on **2026-09-07** (re-run: `grep -rn "甲己|乙庚|丙辛|丁壬|戊癸" lib/ tests/` -> no hits, exit 1), so this row measures an unbuilt engine right up to the commit that builds it. (2) The **CROSS-CHART ORACLE** question is CLOSED by ruling A, and closed by narrowing the claim rather than by finding an oracle: Joey's plotter is still single-chart (probed 2026-08-12) and there is still no pair oracle. Ruling A approves **detection** — the repo's own tested 六合 / 冲 / 害 / 刑 tables read with two-chart inputs, verifiable as table agreement — and keeps **interpretation** out of the engine entirely. COWORK-BRIEF section 4's rule is satisfied, not waived: the half with no oracle is the half the engine is forbidden to compute |
+| **Email capture at checkout** | Recovery and delivery channel. Today the reading URL is the only address Katon holds, and checkout asks for nothing (`d81434a` removed the WhatsApp field) | A register call on the wording plus a column. Also **required by the compat spec**, which creates an email identity at the first compat CHECKOUT while the mirror stays anonymous. **ANSWERED FOR COMPAT ONLY, 2026-09-07 (ruling C):** email-only identity, no password, no login, no sessions, access by secure link — so the "column" is settled in shape and the compat spec now says so. **STILL OPEN, and it is Reyner's call, not a commit's:** whether the existing **Rp 19.000** checkout gains an email field, and the `/privasi` wording that has to move with it. Ruling C is about the COMPAT checkout; reading it as a site-wide answer would put an email field on a live paid path nobody ruled on |
 | **Server-side conversion counters** | Nothing records funnel steps. `d81434a` removed a required field between intent and checkout with no instrumentation to see the effect | A build. **This BLOCKS the 25-45k price test CLAUDE.md requires** — a price test with no conversion measurement is a coin toss with extra steps. Note the /privasi correction under this table |
 | **`Promise.all` on the rate-limit dimensions, and folding `season-check` into the mirror POST — BOTH RETIRED BY MEASUREMENT, 2026-09-05. NOT deferred, and NOT forgotten.** | **WHAT THEY WERE.** Two latency fixes ranked behind the region change in `docs/qa/2026-09-05-production-submit-split.md`. (a) `consume()` awaits its two dimensions in series (`lib/ratelimit.js:196`, `:212`), one Supabase RPC each, so `Promise.all` would remove one round trip. (b) `POST /api/season-check` is a whole extra client round trip before the create, so folding its answer onto the mirror POST's response would remove it. **WHY THEY ARE RETIRED RATHER THAN PARKED: THEY WERE RANKED AGAINST A 2,776ms WAIT AND THE WAIT IS NOW 240.5ms.** `63d6488` put the functions in `sin1`, the database's own AWS region. Measured after (`docs/qa/2026-09-05-region-move-both-legs.md`): one intra-region round trip costs **~46ms** where it cost 283-1,131ms trans-Pacific, and `season-check` costs **51.2ms** where it cost 269.3ms. So (a) now saves **~46ms** of a 240.5ms path and (b) saves **~51ms** — and (b) is the LARGER of the two, having swapped places, because it removes a client-to-function hop rather than a server-to-database one and a real device's network hop shortens but does not vanish. **The move did not reduce the NUMBER of round trips; it made each nearly free, and three cheap round trips are approximately one cheap round trip.** Neither mechanism is wrong and neither is deleted from the code's future — what is gone is the magnitude that justified doing them. **AND REYNER'S ACCEPTANCE RULE IS NO LONGER TRIGGERED EITHER**: *"if a path's measured production latency exceeds ~1 second, the UI carries an unmistakably active waiting state"* — at 240.5ms warm the condition is false, so PR2's step 4 waiting-state work is not required on latency grounds. **This does not repeal that rule**, which stands at `components/Funnel.jsx`'s `disabled={busy}` site; it records that what would invoke it is currently absent | **NOTHING. THAT IS THE POINT OF THE ROW.** These are not waiting on a decision, a build or a price — they are answered. **What would REOPEN them is a change that makes a round trip expensive again**, and there is exactly one on the horizon: **a migration off Vercel that lands the service outside Singapore.** `docs/qa/2026-09-05-workers-compatibility-spike.md` makes "the Render service must be in Singapore" the first line of the migration brief for this reason. If that requirement is ever missed, these two items come back with their old magnitudes and this row is the record of why |
 | **The Pending poll dead end** | `components/Funnel.jsx` polls `/full` every 3s and gives up after 60 tries onto a permanent spinner. Reachable in-session and now also via the Xendit success redirect (`c5e649c`) | A decision on what a 3-minute-old unconfirmed payment should say. It cannot fall back to the offer — she paid — so it needs copy, which is a register call |
@@ -915,6 +915,71 @@ all, and the measured answer is 0 of 13 with identical importances. The row exis
 also said the move would be *"expected, NOT
 the re-coupling tripwire firing"*, which would have authorised dismissing a genuine alarm. **A
 prediction that tells a reader what to disregard must carry its grep.**
+
+## RULED 2026-09-07 — compat rulings A/B/C, and compat now GATES LAUNCH
+
+Three rulings by Reyner, 2026-09-07, released as `docs/prompts/W-compat-1.md` (commit `10fdd1d`).
+They are quoted verbatim; the prompt is the primary record and this block is the ledger copy so a
+session that starts at `PROGRESS.md` finds them without opening `docs/prompts/`.
+
+**A — cross-chart branch relations are APPROVED, interpretation is NOT.**
+
+> A — YES. Existing Earthly Branch relationship tables can be applied cross-chart. Using one branch
+> from Person A and one from Person B does not constitute a new BaZi rule; it is the same verified
+> 六合 / 冲 / 害 / 刑 table with two-chart inputs. Boundary: the detection rule is approved, but the
+> relationship interpretation is not automatically inherited from the single-chart meaning.
+> Cross-chart meaning belongs in the content/interpretation layer and must not be improvised in the
+> engine. This unblocks P2, P3, P5, and P7.
+
+**THIS CLOSES THE CROSS-CHART ORACLE QUESTION, and it closes it by narrowing the claim rather than
+by finding an oracle.** THE DEFERRED REGISTER's compat row required "an oracle that can verify a
+CROSS-CHART claim" and noted Joey's plotter is single-chart (probed 2026-08-12). No oracle appeared.
+What ruling A establishes is that DETECTION needs none: it is the repo's own tested tables read with
+two-chart inputs, so the thing to verify is table agreement, which `tests/relations.spec.mjs`
+already does. **The half that had no oracle is the half ruling A refuses the engine** — meaning. A
+session that reads this as "the oracle rule was waived" has it backwards.
+
+**B — 天干五合 is SOURCED and lands as detection plus metadata, never as transformation.**
+
+> B — YES, with one important constraint. Implement the canonical 天干五合 pairs (甲己→土, 乙庚→金,
+> 丙辛→水, 丁壬→木, 戊癸→火) but treat this as 五合 detection + traditional transformation-target
+> metadata, not as an instruction to transform either Day Master or recalculate its element. Whether
+> 合 actually transforms is outside this MVP engine. Source it properly before implementation: Joey
+> Yap's material as one authority plus an independent source that explicitly gives both the five
+> pairs and the five target elements. If authoritative sources conflict, stop P1 rather than
+> inventing a resolution.
+
+The two sources Reyner found are named in the prompt and are quoted verbatim, with the fetch
+recorded, in `docs/engine/stem-combinations.md` at commit 4 of prompt W. **The table above is
+INPUT, not a source** — rule 4 says a table handed to a session in a prompt is verified against a
+second source or not implemented, and prompt W's commit 4 stops rather than implementing from this
+copy if a source cannot be reached.
+
+**C — email identity, not an account.**
+
+> C — YES. Email-only identity, not a conventional account. At first compatibility checkout: collect
+> email, associate the purchase/report with it, provide access through a secure link. No passwords,
+> login, reset-password or sessions. Spec wording changes from "account + email created at first
+> compat checkout" to "Email identity is created/associated at first compat checkout; no
+> password-based account is required."
+
+Applied to `docs/product/compatibility-reading-spec.md` in the same commit as this block.
+
+**LAUNCH SCOPE — compat now gates launch. This SUPERSEDES the 2026-08-19 ruling.**
+
+> LAUNCH SCOPE, Reyner 2026-09-07: promotion happens when the MVP is ready END TO END, compat
+> included.
+
+`docs/NEXT.md`'s LAUNCH SCOPE section, ruled 2026-08-19, opened **"Compatibility does NOT gate
+launch"** and reasoned that compat's price band needs traffic that does not exist yet. That section
+is marked SUPERSEDED in this commit and not deleted: its reasoning is the record of why compat was
+parked for nineteen days, and the paragraph about the 10% floor rate no longer being a launch
+blocker is unrelated to compat and still live.
+
+**What this ruling does NOT do:** it does not price compat, it does not add `compat` to
+`SELLABLE_SKUS`, and it does not make prompt W shippable on its own. Prompt W is engine facts with
+no reader-facing surface. The end-to-end MVP compat needs is scoped as tranche 2 (prompt X), listed
+under THE CURRENT WORK in `docs/NEXT.md` with an owner per item.
 
 ## RULED 2026-08-26 — A HEADING SATISFIES RULE 21'S "SAME BREATH"
 

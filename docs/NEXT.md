@@ -135,6 +135,13 @@ strength of the migration FILE existing, which says nothing about whether it ran
 > where something STANDS, it has to be swept every time that thing moves** - which is the failure this
 > file already logs seven times, arriving one level up, in the notes about the failure.
 
+2026-09-07: **STALE AN EIGHTH TIME, and it is the 08-19 rule broken rather than a new way** - THE
+CURRENT WORK still read "PR #91, OPEN" for four days after #91 merged (2026-09-03), while #92, #93
+and #94 merged behind it and `gh pr list --state open` returned empty on 2026-09-07; no new rule is
+added, because the 09-03 entry above already predicts exactly this (the heading carried its own
+`gh pr view 91 --json state` check two lines down and the reader who believed the sentence never ran
+it).
+
 A fourth, about scope: **LIVE STATE was read in the same pass, per the 08-29 rule, and deliberately
 NOT edited.** PR #91 changes what a reader sees while a reading loads, and LIVE STATE describes what
 SHIPS. Writing #91's behaviour into it while #91 is open would recreate the exact 2026-08-23 trap
@@ -152,7 +159,7 @@ the moment it lands. LIVE STATE moves when #91 does, in the commit that changes 
    anything near the paid path).
 3. `prompts/R-card-a-4x5.md` — **DONE. Merged as #85 (`c8cee93`).** It said "THE CURRENT WORK" here
    for three days after it landed; the section below carries the correction and what must not be
-   redone. **The current work is PR #91, the loading transitions, and it has no prompt file.**
+   redone. **Superseded 2026-09-07: the loading transitions merged as #91 and the current work is `prompts/W-compat-1.md`.**
 4. `prompts/Q-demand-test.md` — **DONE. Merged as #84, AND IT OWES NOTHING ANY MORE.** All six commits
    plus the ruled copy. Both open items closed on Reyner's production walk of 2026-09-02: migration
    `0009` is applied, and `upcoming_seen` fired there alongside the other four events. This entry read
@@ -206,10 +213,74 @@ finds it changed has found a defect rather than the ruling. The floor rate is st
 budget - rule 15 leaves one provider, so an outage is a 100% floor. It simply no longer decides ship
 or no-ship.
 
-## THE CURRENT WORK, 2026-09-03 - THE LOADING TRANSITIONS, PR #91, OPEN
+## THE CURRENT WORK, 2026-09-07 - PROMPT W, COMPAT TRANCHE 1, `feat/compat-1`
 
-**`fix/loading-transitions`, THREE COMMITS, OPEN AND NOT MERGED.** Check with
-`gh pr view 91 --json state` before trusting this line. No prompt file: Reyner ruled these directly
+**`docs/prompts/W-compat-1.md`, RELEASED 2026-09-07 by Reyner. Five ordered commits on
+`feat/compat-1`.** Engine facts for the paid Compatibility reading under the three rulings of
+2026-09-07 (A cross-chart branch relations, B sourced 天干五合 as detection + metadata, C email
+identity). The rulings are verbatim in the prompt and in `PROGRESS.md`'s `RULED 2026-09-07`.
+
+| | |
+|---|---|
+| 0 | the prompt file alone |
+| 1 | the rulings land in the ledger, nothing else changes |
+| 2 | `lib/compat/branchRelations.js` - cross-chart 六合 / 冲 / 害 / 刑 (P2 facts) |
+| 3 | `lib/compat/complementarity.js` - cross-chart element complementarity (P3 facts) |
+| 4 | `docs/engine/stem-combinations.md` + `lib/compat/stemRelation.js` - Day Master pair, sourced 五合 (P1 facts) |
+
+**NOTHING IN PROMPT W REACHES A READER.** No UI, no route, no migration, no pricing change (`compat`
+stays absent from `SELLABLE_SKUS`), no `STAGE6_VERSION` bump, no Indonesian strings, and no
+interpretation strings of any kind in `lib/compat/`. It is not shippable on its own and is not
+meant to be.
+
+**WHAT TRANCHE 2 (PROMPT X) IS OWED, AND BY WHOM:**
+
+| Owed | Owner |
+|---|---|
+| P4/P5 deterministic rules - not yet written, so they are out of prompt W | Cowork drafts, Reyner rules |
+| `/privasi` wording, and whether the Rp 19.000 checkout gains an email field | **Reyner** - ruling C is about the COMPAT checkout only |
+| Second-person input, P0 comparison card, email checkout, relational renderer prompt + Stage 6 | Claude Code, prompt X |
+
+**THREE GAPS FOUND WHILE BUILDING TRANCHE 1, recorded here because a gap named only
+in a commit message is a gap nobody reads.** None is a defect in what landed; each is
+something the next tranche either closes or deliberately leaves open.
+
+1. **CROSS-CHART 三刑 IS NOT DETECTED, by specification rather than by omission.** A
+   punishment trine needs three branches (寅巳申, 丑戌未) and every fact in
+   `lib/compat/branchRelations.js` is pairwise - one branch from each chart, the pillar
+   named - so `branchPunishments` is never handed more than two. Ruling A lists exactly
+   六合 / 冲 / 害 / 刑, and the pairwise-detectable part of 刑 is self-punishment and the
+   子卯 pair. Closing it needs a FACT SHAPE that names two pillars on one side, which is
+   a design decision, not a bug fix. Owner: Cowork to spec, Reyner to rule whether it is
+   worth a reader's attention at all.
+2. **THE 13-CHART FIXTURE CANNOT REACH TWO COMPAT CASES**, so both are asserted with
+   stipulated inputs and both say so in the spec: no two DISTINCT fixture charts share an
+   absent element (`sameImbalance` uses charts 5 and 105, one birth date with and without
+   a birth time), and no chart lacks enough elements to make a supplier come back null
+   (asserted with an injected `{ favorable: ['Wood'] }`). A fixture gap, not a module gap.
+   Owner: Claude Code, whenever the fixture grows for another reason.
+3. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
+   100-ordering 五合 enumeration runs on synthetic `{ day: { stem } }` objects, with real
+   charts exercising the genuine path separately. Owner: same as 2.
+
+**THERE IS NO ORACLE FOR A PAIR CLAIM** (Joey's plotter is single-chart, probed 2026-08-12). Every
+test in prompt W asserts internal consistency against the repo's locked tables and says so in its
+header. A later session must not go looking for a pair oracle; ruling A settles what that costs.
+
+## PROMPT W's PREDECESSOR IS MERGED, 2026-09-03. NOT CURRENT WORK ANY MORE.
+
+**`fix/loading-transitions` MERGED as #91 on 2026-09-03.** So are #92, #93 and #94.
+
+```
+$ gh pr list --state open        # 2026-09-07
+(empty)
+$ gh pr view 91 --json state
+{"state":"MERGED"}
+```
+
+**This heading read "PR #91, OPEN" for four days** and told the reader to run that exact
+`gh pr view` command before trusting it. That is the eighth staleness of this pointer and the
+design-note history at the top of this file carries it. No prompt file: Reyner ruled these directly
 on 2026-09-02 and 2026-09-03 after walking the funnel himself.
 
 | | |
@@ -559,9 +630,17 @@ Prompt L is **four** ordered commits that close it — `The Morning Dew` in the 
 content), the engine requiring the archetype name in the opening (commit 1), the rule-23 bracket check
 (commit 2), two harness defects (commit 3). Each is measured on its own; do not bundle or reorder them.
 
-## LAUNCH SCOPE, ruled 2026-08-19 by Reyner
+## LAUNCH SCOPE, ruled 2026-08-19 by Reyner — **THE COMPAT CLAUSE IS SUPERSEDED 2026-09-07**
 
-**Compatibility does NOT gate launch.** Live = the free full mirror served from the new pipeline, plus
+> **LAUNCH SCOPE, Reyner 2026-09-07: promotion happens when the MVP is ready END TO END, compat
+> included.**
+
+**COMPAT NOW GATES LAUNCH.** The 2026-08-19 reasoning below is kept rather than deleted: it is the
+record of why compat was parked for nineteen days, and everything in this section that is NOT about
+compat - the 10% floor rate no longer being a launch blocker, precondition 3's pooled form, the
+n-renders harness - is untouched and still live. Read the sentence directly below as history.
+
+**Compatibility does NOT gate launch.** ~~(2026-08-19. Superseded 2026-09-07.)~~ Live = the free full mirror served from the new pipeline, plus
 Rp 19.000 for the hi-res card and the Complete Edition PDF. That is the swap package ruled 2026-08-13,
 unchanged. Compat stays priced-but-unbuilt (`compat` absent from `SELLABLE_SKUS`, checkout 400s) and
 ships after there is real demand signal - `CLAUDE.md` says its price band is to be TESTED, and testing

@@ -135,6 +135,16 @@ strength of the migration FILE existing, which says nothing about whether it ran
 > where something STANDS, it has to be swept every time that thing moves** - which is the failure this
 > file already logs seven times, arriving one level up, in the notes about the failure.
 
+2026-09-07, later the same day: **compat tranche 1 merged as #95 (`db9e74c`) and this pointer moved
+in the SAME PASS as the merge** - the 08-07 rule applied on purpose rather than recorded as broken
+again, and `Read, in order` item 3 was swept with the heading instead of being left to contradict it,
+which is the 09-03 failure. LIVE STATE was read in the same pass per the 08-29 rule and was
+**deliberately NOT edited**: every line in tranche 1 is engine facts with no reader-facing surface, so
+its Compatibility row - not purchasable, absent from `SELLABLE_SKUS`, `/api/pay` 400s - is still true
+after the merge. Editing it would have described the target instead of what ships, which is the one
+thing that block exists to refuse. **The heading now carries the distinction explicitly, because
+"MERGED" invites exactly the reading LIVE STATE forbids: merged is not shipped.**
+
 2026-09-07: **STALE AN EIGHTH TIME, and it is the 08-19 rule broken rather than a new way** - THE
 CURRENT WORK still read "PR #91, OPEN" for four days after #91 merged (2026-09-03), while #92, #93
 and #94 merged behind it and `gh pr list --state open` returned empty on 2026-09-07; no new rule is
@@ -159,7 +169,9 @@ the moment it lands. LIVE STATE moves when #91 does, in the commit that changes 
    anything near the paid path).
 3. `prompts/R-card-a-4x5.md` — **DONE. Merged as #85 (`c8cee93`).** It said "THE CURRENT WORK" here
    for three days after it landed; the section below carries the correction and what must not be
-   redone. **Superseded 2026-09-07: the loading transitions merged as #91 and the current work is `prompts/W-compat-1.md`.**
+   redone. **Superseded 2026-09-07: the loading transitions merged as #91, and `prompts/W-compat-1.md` -
+compat tranche 1 - merged the same day as #95 (`db9e74c`). THERE IS NO CURRENT BUILD WORK: tranche 2
+(prompt X) is NOT WRITTEN. See THE CURRENT WORK below for what it is owed and by whom.**
 4. `prompts/Q-demand-test.md` — **DONE. Merged as #84, AND IT OWES NOTHING ANY MORE.** All six commits
    plus the ruled copy. Both open items closed on Reyner's production walk of 2026-09-02: migration
    `0009` is applied, and `upcoming_seen` fired there alongside the other four events. This entry read
@@ -213,25 +225,47 @@ finds it changed has found a defect rather than the ruling. The floor rate is st
 budget - rule 15 leaves one provider, so an outage is a 100% floor. It simply no longer decides ship
 or no-ship.
 
-## THE CURRENT WORK, 2026-09-07 - PROMPT W, COMPAT TRANCHE 1, `feat/compat-1`
+## THE CURRENT WORK, 2026-09-07 - COMPAT TRANCHE 1 **MERGED**, TRANCHE 2 **NOT WRITTEN**
 
-**`docs/prompts/W-compat-1.md`, RELEASED 2026-09-07 by Reyner. Five ordered commits on
-`feat/compat-1`.** Engine facts for the paid Compatibility reading under the three rulings of
-2026-09-07 (A cross-chart branch relations, B sourced 天干五合 as detection + metadata, C email
-identity). The rulings are verbatim in the prompt and in `PROGRESS.md`'s `RULED 2026-09-07`.
+**COMPAT TRANCHE 1 IS MERGED. TRANCHE 2 (PROMPT X) IS NOT WRITTEN. The owed list is as in
+`8db0f24`, below.**
 
-| | |
+```
+$ git log -1 --format='%h %s'                       # 2026-09-07
+db9e74c Merge pull request #95 from Renge13/feat/compat-1
+$ gh pr view 95 --json state,mergedAt
+{"mergedAt":"2026-09-07T05:34:34Z","state":"MERGED"}
+```
+
+**`feat/compat-1` IS DELETED, locally and on origin.** A later session that goes looking for it
+has found this line, not a lost branch. Merged as a MERGE COMMIT rather than a squash, on Reyner's
+instruction, because the six commits are individually revertable and each engine commit's message
+carries the red run that preceded it - a squash would have collapsed all six into one message and
+made `git revert` all-or-nothing.
+
+| | landed as |
 |---|---|
-| 0 | the prompt file alone |
-| 1 | the rulings land in the ledger, nothing else changes |
-| 2 | `lib/compat/branchRelations.js` - cross-chart 六合 / 冲 / 害 / 刑 (P2 facts) |
-| 3 | `lib/compat/complementarity.js` - cross-chart element complementarity (P3 facts) |
-| 4 | `docs/engine/stem-combinations.md` + `lib/compat/stemRelation.js` - Day Master pair, sourced 五合 (P1 facts) |
+| 0 | `10fdd1d` the prompt file alone |
+| 1 | `7f1550e` the rulings land in the ledger, nothing else changes |
+| 2 | `72c0868` `lib/compat/branchRelations.js` - cross-chart 六合 / 冲 / 害 / 刑 (P2 facts) |
+| 3 | `516704e` `lib/compat/complementarity.js` - cross-chart element complementarity (P3 facts) |
+| 4 | `3eb346b` `docs/engine/stem-combinations.{md,json}` + `lib/compat/stemRelation.js` - Day Master pair, sourced 五合 (P1 facts) |
+| + | `8db0f24` the three gaps tranche 1 found, listed below |
 
-**NOTHING IN PROMPT W REACHES A READER.** No UI, no route, no migration, no pricing change (`compat`
+**`docs/prompts/W-compat-1.md` is the prompt; the three rulings of 2026-09-07 are verbatim there
+and in `PROGRESS.md`'s `RULED 2026-09-07`** (A cross-chart branch relations, B sourced 天干五合 as
+detection + metadata, C email identity).
+
+**MERGED IS NOT SHIPPED, AND THIS HEADING SAYS SO ON PURPOSE.** Everything in tranche 1 is engine
+facts with no reader-facing surface, so nothing a user can see changed when `db9e74c` landed. Do
+not read "MERGED" here as "compat is live" - `compat` is still absent from `SELLABLE_SKUS` and its
+checkout still 400s. What DID change is that compat now GATES LAUNCH (ruled 2026-09-07, superseding
+the 2026-08-19 LAUNCH SCOPE below), so the remaining critical path runs through prompt X.
+
+**NOTHING IN PROMPT W REACHES A READER, WHICH IS STILL TRUE AFTER THE MERGE.** No UI, no route, no migration, no pricing change (`compat`
 stays absent from `SELLABLE_SKUS`), no `STAGE6_VERSION` bump, no Indonesian strings, and no
-interpretation strings of any kind in `lib/compat/`. It is not shippable on its own and is not
-meant to be.
+interpretation strings of any kind in `lib/compat/`. It was not shippable on its own and was not
+meant to be; merging it did not change that.
 
 **WHAT TRANCHE 2 (PROMPT X) IS OWED, AND BY WHOM:**
 

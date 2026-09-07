@@ -346,6 +346,8 @@ meant to be; merging it did not change that.
 | **THE EMAIL SENDER.** Ruling C stores an email at compat checkout and **Katon has no sender**. v1 shows the report link on screen after payment and the email is the recovery record. Whether anything is ever sent, and by what, is X-b3's decision | **Reyner** |
 | **`compat_invoice_desc`.** The Xendit statement line for compat. Rule 20 makes a statement line chrome, so it is Reyner's. It is live as `@@UNRULED@@` and a production build REFUSES while it is | **Reyner** |
 | **X-b2 (prose) and X-b3 (surface)**, outlined at the end of `X-compat-2b1.md`. **X-b2 is unblocked by this prompt** - `GET /api/pair/[id]` is the seam it hangs the renderer off | Cowork to write |
+| **X-b3 MUST SET THE COMPAT REDIRECT URLS.** A compat checkout currently sets NEITHER `successRedirectUrl` NOR `failureRedirectUrl`, so a buyer's last screen would be Xendit's. `readingUrl` builds `/r/<token>` and a PAIR id there is a reading URL for a non-reading; the right destination is the report page, which does not exist and whose route name is Reyner's. Accepted only because no reader can reach a compat checkout yet | Claude Code, prompt X-b3 |
+| **MIGRATION `0010_pair.sql` APPLIED BY HAND.** Nothing in the repo can report whether it has run, so no commit can close this row - the same owner-held shape this file's design notes log for `0009` | **Reyner** |
 
 **THREE GAPS FOUND WHILE BUILDING TRANCHE 1, recorded here because a gap named only
 in a commit message is a gap nobody reads.** None is a defect in what landed; each is

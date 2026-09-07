@@ -225,10 +225,40 @@ finds it changed has found a defect rather than the ruling. The floor rate is st
 budget - rule 15 leaves one provider, so an outage is a 100% floor. It simply no longer decides ship
 or no-ship.
 
-## THE CURRENT WORK, 2026-09-07 - COMPAT TRANCHE 1 **MERGED**, TRANCHE 2 **NOT WRITTEN**
+## THE CURRENT WORK, 2026-09-07 - PROMPT X-a, COMPAT TRANCHE 2a, `feat/compat-2a`
 
-**COMPAT TRANCHE 1 IS MERGED. TRANCHE 2 (PROMPT X) IS NOT WRITTEN. The owed list is as in
-`8db0f24`, below.**
+**`docs/prompts/X-compat-2a.md`, RELEASED 2026-09-07 (evening) by Reyner. Four ordered commits on
+`feat/compat-2a`.** P4 temperament facts and P5 pull/fit facts, under the evening rulings: P4 gets
+a Katon-owned badge layer (matching / related / contrasting), P5 is accepted as written, the spouse
+star is deferred as a high-value v1 candidate, and the PRODUCT PRINCIPLE is folded into
+`CLAUDE.md`. All four are verbatim in the prompt and in `PROGRESS.md`'s
+`RULED 2026-09-07 (evening)`.
+
+**THE RULE THE ENGINE IMPLEMENTS IS `docs/product/compat-p4-p5-rules.md`**, not this pointer and
+not the prompt. `lib/compat/pullFit.js` cites its section numbers and its spec quotes each clause
+it asserts, so a change to that doc is a behaviour change and ships with a red test.
+
+| | |
+|---|---|
+| 0 | the prompt file alone |
+| 1 | the rulings, the rule doc, the `CLAUDE.md` principle line, this pointer |
+| 2 | `lib/compat/temperament.js` - P4, same_god / same_group / different_group |
+| 3 | `lib/compat/pullFit.js` - P5, pull / fit / quadrant |
+
+**TRANCHE 2b IS PROMPT X-b AND IS NOT WRITTEN.** UI, P0 comparison card, email-only checkout and
+the `/privasi` wording, the relational renderer prompt, the Stage 6 gate, and content in Reyner's
+register. Nothing in X-a reaches a reader.
+
+### COMPAT TRANCHE 1 IS MERGED, and it is not current work any more
+
+**The owed list is as in `8db0f24`.**
+
+```
+$ git log -1 --format='%h %s' db9e74c              # 2026-09-07
+db9e74c Merge pull request #95 from Renge13/feat/compat-1
+$ gh pr view 95 --json state,mergedAt
+{"mergedAt":"2026-09-07T05:34:34Z","state":"MERGED"}
+```
 
 ```
 $ git log -1 --format='%h %s'                       # 2026-09-07
@@ -273,7 +303,9 @@ meant to be; merging it did not change that.
 |---|---|
 | P4/P5 deterministic rules - not yet written, so they are out of prompt W | Cowork drafts, Reyner rules |
 | `/privasi` wording, and whether the Rp 19.000 checkout gains an email field | **Reyner** - ruling C is about the COMPAT checkout only |
-| Second-person input, P0 comparison card, email checkout, relational renderer prompt + Stage 6 | Claude Code, prompt X |
+| Second-person input, P0 comparison card, email checkout, relational renderer prompt + Stage 6 | Claude Code, **prompt X-b, not written** |
+| **SEVEN INDONESIAN STRINGS, unruled 2026-09-07.** Three P4 badge names (`p4_matching`, `p4_related`, `p4_contrasting`) and four P5 quadrant labels (`p5_q1`..`p5_q4`). They live as `@@UNRULED@@` slots in `docs/product/compat-p4-p5-rules.md`; **nothing in `lib/compat/` carries a placeholder**, because the engine emits ids and the content layer holds the words. `scripts/check-unruled-copy.mjs` refuses a production build while any placeholder is live in `lib/site/copy.js` - these are NOT there yet and will not be caught by it until X-b puts them on a surface | **Reyner** |
+| **SPOUSE-STAR SOURCES.** Ruled a high-value v1 candidate 2026-09-07 and still unsourced. Two authorities needed, the same bar as 天干五合. Joey Yap HYDB was checked 2026-09-07 and does NOT state it, so this needs two sources FOUND, not one confirmation added | Cowork |
 
 **THREE GAPS FOUND WHILE BUILDING TRANCHE 1, recorded here because a gap named only
 in a commit message is a gap nobody reads.** None is a defect in what landed; each is
@@ -293,7 +325,14 @@ something the next tranche either closes or deliberately leaves open.
    a birth time), and no chart lacks enough elements to make a supplier come back null
    (asserted with an injected `{ favorable: ['Wood'] }`). A fixture gap, not a module gap.
    Owner: Claude Code, whenever the fixture grows for another reason.
-3. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
+3. **ALL FOUR P5 QUADRANTS ARE REACHABLE from real fixture pairs** - swept over every
+   ordered pair of the 16 fixture charts on 2026-09-07, not inferred from four samples, and the
+   sweep is in `tests/compat-pull-fit.spec.mjs`. **So there is no unreachable quadrant to
+   record.** What IS unreachable is one CLAUSE: **2.2.a can never FAIL** from the fixture, because
+   no chart lacks enough elements for both suppliers to come back null - which is gap 2 above,
+   arriving one layer up. Its failing branch is asserted with a stipulated complementarity object
+   and the spec says so where it is used. Owner: Claude Code, whenever the fixture grows.
+4. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
    100-ordering 五合 enumeration runs on synthetic `{ day: { stem } }` objects, with real
    charts exercising the genuine path separately. Owner: same as 2.
 

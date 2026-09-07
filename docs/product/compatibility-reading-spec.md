@@ -8,9 +8,17 @@ RECONCILED 2026-08-02 (decision trail: the compat-flow review sheet, now in docs
 landed in this body: tease-first funnel (paywall between P0 and P1), P0 free tease = faces + ONE named
 relational fact, comparison card shareable pre-payment, P6 Luck Pillar sync DESCOPED from v1,
 P5 quadrants kept as a documented Katon ruling, no consent line for person B (P2 reframe copy carries
-the ethics), account + email created at first compat checkout (mirror stays anon), price section
+the ethics), account + email created at first compat checkout (mirror stays anon) [SUPERSEDED 2026-09-07 by
+ruling C: email IDENTITY, no password-based account], price section
 replaced by the launch-decisions pointer. Names corrected to the 08-02 locked set.
 Voice sweep to the composed register still pending at authoring time.
+
+RULING C APPLIED 2026-09-07 (Reyner, verbatim in docs/prompts/W-compat-1.md and PROGRESS.md's
+RULED 2026-09-07): email-only identity, NOT a conventional account. The two places this file said
+"account + email created at first compat checkout" now say "email identity created/associated" - the
+08-02 reconciled line above is left as written, with its correction inline, because it is a record of
+what was decided that day and ruling C changed it five weeks later. No password, no login, no
+reset-password, no sessions; access is by secure link.
 -->
 
 # Katon — Paid Compatibility Reading (合婚) Spec
@@ -50,8 +58,11 @@ literal score.
 
 Assume (funnel corrected 08-02 to match the decided paywall placement): user has read their free
 mirror, hit "how compatible are you with someone?", and entered the second person's birth date
-(+ optional hour). **P0 shows FREE. The paywall sits between P0 and P1.** Payment creates the
-account (email captured at checkout, transactionally framed); the mirror itself stays anonymous.
+(+ optional hour). **P0 shows FREE. The paywall sits between P0 and P1.** **Email identity is created/associated at
+first compat checkout; no password-based account is required** (ruling C, Reyner 2026-09-07): email
+is collected at checkout, transactionally framed, the purchase and report are associated with it, and
+access is provided through a secure link. No passwords, login, reset-password or sessions. The mirror
+itself stays anonymous.
 
 ### P0 — The pairing reveal (the FREE tease — decided 08-02, option c)
 Both cards, side by side. Two archetype faces at a glance, PLUS exactly ONE named relational fact

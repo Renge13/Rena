@@ -325,7 +325,14 @@ something the next tranche either closes or deliberately leaves open.
    a birth time), and no chart lacks enough elements to make a supplier come back null
    (asserted with an injected `{ favorable: ['Wood'] }`). A fixture gap, not a module gap.
    Owner: Claude Code, whenever the fixture grows for another reason.
-3. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
+3. **ALL FOUR P5 QUADRANTS ARE REACHABLE from real fixture pairs** - swept over every
+   ordered pair of the 16 fixture charts on 2026-09-07, not inferred from four samples, and the
+   sweep is in `tests/compat-pull-fit.spec.mjs`. **So there is no unreachable quadrant to
+   record.** What IS unreachable is one CLAUSE: **2.2.a can never FAIL** from the fixture, because
+   no chart lacks enough elements for both suppliers to come back null - which is gap 2 above,
+   arriving one layer up. Its failing branch is asserted with a stipulated complementarity object
+   and the spec says so where it is used. Owner: Claude Code, whenever the fixture grows.
+4. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
    100-ordering 五合 enumeration runs on synthetic `{ day: { stem } }` objects, with real
    charts exercising the genuine path separately. Owner: same as 2.
 

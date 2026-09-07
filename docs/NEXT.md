@@ -241,6 +241,28 @@ meant to be.
 | `/privasi` wording, and whether the Rp 19.000 checkout gains an email field | **Reyner** - ruling C is about the COMPAT checkout only |
 | Second-person input, P0 comparison card, email checkout, relational renderer prompt + Stage 6 | Claude Code, prompt X |
 
+**THREE GAPS FOUND WHILE BUILDING TRANCHE 1, recorded here because a gap named only
+in a commit message is a gap nobody reads.** None is a defect in what landed; each is
+something the next tranche either closes or deliberately leaves open.
+
+1. **CROSS-CHART 三刑 IS NOT DETECTED, by specification rather than by omission.** A
+   punishment trine needs three branches (寅巳申, 丑戌未) and every fact in
+   `lib/compat/branchRelations.js` is pairwise - one branch from each chart, the pillar
+   named - so `branchPunishments` is never handed more than two. Ruling A lists exactly
+   六合 / 冲 / 害 / 刑, and the pairwise-detectable part of 刑 is self-punishment and the
+   子卯 pair. Closing it needs a FACT SHAPE that names two pillars on one side, which is
+   a design decision, not a bug fix. Owner: Cowork to spec, Reyner to rule whether it is
+   worth a reader's attention at all.
+2. **THE 13-CHART FIXTURE CANNOT REACH TWO COMPAT CASES**, so both are asserted with
+   stipulated inputs and both say so in the spec: no two DISTINCT fixture charts share an
+   absent element (`sameImbalance` uses charts 5 and 105, one birth date with and without
+   a birth time), and no chart lacks enough elements to make a supplier come back null
+   (asserted with an injected `{ favorable: ['Wood'] }`). A fixture gap, not a module gap.
+   Owner: Claude Code, whenever the fixture grows for another reason.
+3. **THE FIXTURE COVERS 7 OF 10 DAY MASTER STEMS** - 己, 丁 and 辛 never appear - so the
+   100-ordering 五合 enumeration runs on synthetic `{ day: { stem } }` objects, with real
+   charts exercising the genuine path separately. Owner: same as 2.
+
 **THERE IS NO ORACLE FOR A PAIR CLAIM** (Joey's plotter is single-chart, probed 2026-08-12). Every
 test in prompt W asserts internal consistency against the repo's locked tables and says so in its
 header. A later session must not go looking for a pair oracle; ruling A settles what that costs.

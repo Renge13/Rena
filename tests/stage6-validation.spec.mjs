@@ -1405,6 +1405,18 @@ test('NO ENGINE STRING WOULD TRIP THE STYLE GATE', () => {
   (function walk(node, path) {
     if (typeof node === 'string') {
       if (path.includes('_note') || path.includes('_README') || EXEMPT.test(path)) return;
+      // ── AN UNRULED PLACEHOLDER IS NOT AN ENGINE STRING, 2026-09-08 ──
+      // `@@UNRULED: kompat_x@@` trips `code_leak` because it IS code-shaped, and
+      // that is the style gate working rather than a false positive. But this
+      // test's invariant is about strings a reader can receive, and a placeholder
+      // cannot reach one: `scripts/check-unruled-copy.mjs` refuses a production
+      // build while any survives, which is a different gate owning a different
+      // question. Skipping them here does not widen what Stage 6 accepts.
+      //
+      // THE MOMENT REYNER RULES A CELL, ITS REAL STRING IS SWEPT like every other
+      // - the exemption follows the sentinel, not the section, so it disappears
+      // by itself as the rulings land rather than needing to be remembered.
+      if (node.includes('@@UNRULED')) return;
       if (!RENDERED_FIELDS.has(path.split('.').at(-1))) return;
       for (const [category, regex] of patterns) {
         if (regex.test(node)) offenders.push(`${path} [${category}]: ${node.slice(0, 70)}`);

@@ -8,7 +8,14 @@ const nextConfig = {
   // the serverless bundle and the renderer throws ENOENT on the first cache miss in
   // production while working perfectly in dev.
   outputFileTracingIncludes: {
-    '/api/**/*': ['./docs/content/renderer-prompt.txt'],
+    // BOTH prompts. The pair prompt is READ AT RUNTIME exactly like the
+    // mirror's, so a missing trace entry is a deploy that throws at module load
+    // on every route touching the render chain - the failure the mirror entry's
+    // own comment in lib/render/prompt.js describes.
+    '/api/**/*': [
+      './docs/content/renderer-prompt.txt',
+      './docs/content/compat-renderer-prompt.txt',
+    ],
   },
 };
 

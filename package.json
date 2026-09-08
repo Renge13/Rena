@@ -36,6 +36,7 @@
     "test:pair-checkout": "node --conditions=react-server --test tests/pair-checkout.spec.mjs",
     "test:pair-serve": "node --conditions=react-server --test tests/pair-serve.spec.mjs",
     "test:pair-semantic": "node --test tests/pair-semantic.spec.mjs",
+    "test:compat-prompt": "node --test tests/compat-prompt.spec.mjs",
     "test:stage3": "node --test tests/stage3-facts.spec.mjs",
     "test:stage3-hierarchy": "node --test tests/stage3-hierarchy.spec.mjs",
     "test:stage3-contract": "node --test tests/stage3-contract.spec.mjs",

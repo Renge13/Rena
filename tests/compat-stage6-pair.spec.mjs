@@ -14,11 +14,13 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
-import { buildPairSemantic } from '../lib/semantic/pair.js';
+import { buildPairSemantic, variantKeysFor } from '../lib/semantic/pair.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
 import { assembleFallback } from '../lib/render/fallback.js';
 import { validateRendering, STAGE6_VERSION } from '../lib/validate/index.js';
 import { pairGuard, REFRAME_OVERLAP } from '../lib/validate/pair.js';
+import { styleGuard } from '../lib/validate/style.js';
+import { renderedText } from '../lib/validate/text.js';
 import BLOCKLIST from '../lib/validate/blocklist.json' with { type: 'json' };
 
 const c = (d, t) => calculateBaziChart({ birthDate: d, birthTime: t });
@@ -41,7 +43,8 @@ test('STAGE6_VERSION moved, once, for this commit', () => {
   // The repo convention: a change to what Stage 6 ACCEPTS OR REJECTS bumps this
   // in the same commit. Two rejecting checks were added, so it moves once - not
   // twice, and not zero times.
-  assert.equal(STAGE6_VERSION, '1.18.0');
+  // 1.19.0: tension_collapse scoped per block for a pair (Reyner, 2026-09-08).
+  assert.equal(STAGE6_VERSION, '1.19.0');
 });
 
 test('THE MIRROR IS UNTOUCHED: pairGuard returns [] for kind mirror', () => {
@@ -185,4 +188,121 @@ test('no_verdict SHIPS WITH NO PATTERNS, and its reader is not broken', () => {
     if (new RegExp(e.pattern, e.flags || 'iu').test('mereka cocok sekali')) hits.push(e.pattern);
   }
   assert.deepEqual(hits, ['\\bcocok\\b'], 'the reader shape used in pair.js finds a real pattern');
+});
+
+// ============================================================
+// style.tension_collapse, SCOPED PER BLOCK FOR A PAIR
+// ============================================================
+// Ruled by Reyner 2026-09-08 on docs/qa/2026-09-08-compat-renders-n10.md, where
+// this one category was 16 of 18 rejections. The red run is four REAL Gemini
+// renders, re-gated byte-for-byte before and after; it is in the commit message.
+// ============================================================
+
+const PHRASE = 'Keduanya saling melengkapi dan tetap selaras.';
+
+/** Append text to the block carrying `factId`. Fails loudly if there is none. */
+const into = (rendering, factId, extra) => {
+  const idx = rendering.blocks.findIndex((b) => (b.fact_ids || []).includes(factId));
+  assert.notEqual(idx, -1, `precondition: a block carries ${factId}`);
+  return {
+    ...rendering,
+    blocks: rendering.blocks.map((b, i) => (i === idx ? { ...b, text: `${b.text} ${extra}` } : b)),
+  };
+};
+
+const tension = (rendering, sj) => styleGuard(rendering, renderedText(rendering), 'gemini', sj)
+  .filter((f) => f.check === 'style.tension_collapse');
+
+test("Reyner's scope lists are what he ruled, and they live in the DATA file", () => {
+  // A silent edit to either list is a change to what Stage 6 accepts. Asserting
+  // the literal sets means such an edit cannot land without also landing here,
+  // where STAGE6_VERSION is asserted one screen up.
+  const scope = BLOCKLIST.style._pair_scope.tension_collapse;
+  assert.deepEqual(scope.banned_in,
+    ['p2_clash', 'p2_harm', 'p2_punishment', 'p3_same_imbalance', 'p1_controls', 'p5_q2', 'p5_q4']);
+  assert.deepEqual(scope.permitted_in,
+    ['p3_supplies', 'p2_harmony', 'p1_combination', 'p5_q1', 'p5_q3']);
+  // `_`-prefixed keys are skipped by style.js's compile filter, so the scope
+  // block cannot be mistaken for a pattern category.
+  assert.equal(Object.keys(BLOCKLIST.style).includes('_pair_scope'), true);
+});
+
+test('THE MIRROR IS UNTOUCHED: the whole reading is still one haystack', () => {
+  const mirror = buildSemanticJson(A);
+  const rendered = into(renderingFor(mirror), mirror.facts[0].id, PHRASE);
+  const text = renderedText(rendered);
+
+  // Rejected, as it always was.
+  assert.equal(tension(rendered, mirror).length, 1);
+
+  // And byte-identical to the pre-scope call, which passed no semanticJson at
+  // all. This is the assertion that would catch a scope leaking onto the mirror.
+  assert.deepEqual(
+    styleGuard(rendered, text, 'gemini', mirror),
+    styleGuard(rendered, text, 'gemini'),
+  );
+});
+
+test('PERMITTED: harmony vocabulary in the P3 supply block passes', () => {
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const p3 = sj.facts.find((f) => f.id === 'p3_supply');
+  assert.equal(variantKeysFor(p3)[0], 'p3_supplies', 'precondition: this pair has a supply');
+
+  const rendered = into(renderingFor(sj), 'p3_supply', PHRASE);
+  assert.deepEqual(tension(rendered, sj), [],
+    'p3_supplies is a complementarity block and the phrase states the fact');
+});
+
+test('BANNED: the same phrase in the P2 tension block still rejects', () => {
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const p2 = sj.facts.find((f) => f.id === 'p2_day_pair');
+  assert.equal(variantKeysFor(p2)[0], 'p2_punishment', 'precondition: a difficult seat');
+
+  const rendered = into(renderingFor(sj), 'p2_day_pair', PHRASE);
+  const found = tension(rendered, sj);
+  assert.equal(found.length, 1, 'a tension dissolved into harmony is still the failure');
+  assert.match(found[0].message, /saling melengkapi/);
+});
+
+test('BANNED: a low-fit quadrant block is a tension block', () => {
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const q = variantKeysFor(sj.facts.find((f) => f.id === 'p5_pull_fit'))[0];
+  assert.equal(q, 'p5_q2');
+  assert.equal(tension(into(renderingFor(sj), 'p5_pull_fit', PHRASE), sj).length, 1);
+});
+
+test('THE PENUTUP IS SCANNED, and that is the ruled default', () => {
+  // The penutup carries no fact and therefore no variant, so it matches neither
+  // list and is scanned. **This is not a leftover: it is where the collision
+  // actually survives.** Re-gating the four real renders of this commit's red run
+  // showed the P3 exemption working on 4 of 4 and every one of them still
+  // rejected, because the model closes on "saling melengkapi" in the penutup.
+  //
+  // Reported to Reyner rather than fixed here: exempting the closing paragraph
+  // is a second ruling, and the penutup is where a harmony collapse would read
+  // most like a verdict.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const rendered = { ...renderingFor(sj), penutup: `${PENUTUP} ${PHRASE}` };
+  assert.equal(tension(rendered, sj).length, 1);
+});
+
+test('A BLOCK CARRYING BOTH KEYS IS SCANNED: tension wins', () => {
+  // Not hypothetical - p2_palace_frame carries the frame plus every relation
+  // found, so one block can hold a harmony and a punishment at once.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const keys = variantKeysFor(sj.facts.find((f) => f.id === 'p2_palace_frame'));
+  assert.ok(keys.includes('p2_clash') || keys.includes('p2_punishment'),
+    'precondition: this pair\'s palace scan found a tension');
+
+  // Hand the block a permitted key as well, the way a renderer merging two facts
+  // into one block would.
+  const base = renderingFor(sj);
+  const idx = base.blocks.findIndex((b) => (b.fact_ids || []).includes('p2_palace_frame'));
+  const merged = {
+    ...base,
+    blocks: base.blocks.map((b, i) => (i === idx
+      ? { ...b, fact_ids: [...b.fact_ids, 'p3_supply'], text: `${b.text} ${PHRASE}` }
+      : b)),
+  };
+  assert.equal(tension(merged, sj).length, 1, 'the permitted key does not launder the tension');
 });

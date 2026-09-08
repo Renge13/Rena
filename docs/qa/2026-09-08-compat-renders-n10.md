@@ -108,3 +108,69 @@ across all ten renders**, including the four with a difficult seat. The model na
 the opening and carries the reframe when asked to. Neither check contributed to the floor rate, and
 each was shown red on a real render before it was trusted, so their silence here is evidence rather
 than absence.
+
+---
+
+# THE RULING, AND WHAT MEASURING IT FOUND (2026-09-08, same day)
+
+**Reyner took option 1** of the three above: narrow the patterns so they fire on a tension fact and
+not on a supply fact. Implemented as a per-block SCOPE rather than as a change to the patterns
+themselves, because the words are not the problem - where they sit is.
+
+    banned in     p2_clash, p2_harm, p2_punishment, p3_same_imbalance, p1_controls, p5_q2, p5_q4
+    permitted in  p3_supplies, p2_harmony, p1_combination, p5_q1, p5_q3
+    mirror        untouched; `kind !== 'pair'` scans the whole reading as before
+
+Ruled sets live in `lib/validate/blocklist.json#style._pair_scope`, not in code, and
+`tests/pair-semantic.spec.mjs` asserts every key in them is a real `kompatibilitas` cell.
+
+## THE RED RUN: FOUR REAL RENDERS, RE-GATED BYTE-FOR-BYTE
+
+Four pairs, ONE Gemini attempt each, through the shipped functions in the shipped order
+(`renderWithGemini` -> `parseRenderResponse` -> `validateRendering`, which is
+`lib/render/index.js:406-436` with the retry loop removed so a REJECTED attempt's blocks survive -
+`renderReading` discards them). The blocks were saved and re-gated after the change, so **the only
+variable between the two runs is the gate.**
+
+Every hit, attributed to the surface it sits on:
+
+| pair | p3_supply block | tension block | penutup |
+|---|---|---|---|
+| 2 x 6 | `saling melengkapi` (heading) | `selaras` in p5_q2 | `saling melengkapi` |
+| 13 x 11 | `saling melengkapi` (heading) | - | `saling melengkapi` |
+| 12 x 6 | `saling melengkapi` (heading) | `selaras` in p5_q2 | `saling melengkapi` |
+| 1 x 2 | `saling melengkapi` (heading) | - | `saling melengkapi` |
+
+    permitted_block 4    scanned_block 2    penutup 4
+
+**THE COLLISION IS IN THE HEADING, WHICH THE n=10 TABLE COULD NOT SHOW.** All four renders title
+the P3 block "Saling Melengkapi ..." - the model is naming the section after the fact it states.
+The scope covers headings for that reason.
+
+**BEFORE:** 4 of 4 rejected. **AFTER:** the P3 exemption fires on 4 of 4, the two p5_q2 blocks still
+reject, and the ruled scope is doing exactly what it was ruled to do.
+
+## AND THE PART THAT IS NOT FIXED: THE PENUTUP
+
+**ALL FOUR STILL REJECT.** Not because the scope failed - because the closing paragraph carries
+`saling melengkapi` in 4 of 4, and **the penutup has no fact and therefore no variant, so it matches
+neither list and is scanned.** That is the ruled default applied faithfully, and on this sample it
+means the change moves the floor rate by ZERO.
+
+    Hubungan ini adalah pertemuan antara dua sosok ... Kalian saling melengkapi melalui elemen ...
+
+This is reported rather than fixed. Exempting the closing paragraph is a SECOND ruling and not
+obviously the right one: the penutup is the last thing a reader sees and the place where harmony
+vocabulary would read most like the overall verdict rule doc 2.4 forbids. Three ways it could go,
+for Reyner:
+
+1. **Exempt the penutup too.** Simplest, and it is where the phrase actually lives. Costs the one
+   surface where a collapse would read as a verdict.
+2. **Scope it by the reading's own quadrant** - permitted when the pair is q1/q3, scanned when q2/q4.
+   Keeps the check where a tension exists to be collapsed.
+3. **Leave it.** Then this scope buys nothing measurable and the 20% stands; the honest move would
+   then be option 3 of the original three - accept a higher floor rate for compat and say so.
+
+**Nothing was loosened to reach a nicer number, and no n=20 replicate should be paid for until this
+is ruled** - it will move the rate more than sampling noise will, which is the same argument the
+n=10 run made about the scope itself.

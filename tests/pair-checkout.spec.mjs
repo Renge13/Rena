@@ -69,13 +69,20 @@ test('compat is sellable, annual is not, and both are priced', () => {
   assert.ok(priceFor('compat') > 0);
 });
 
-test('the compat invoice description is the UNRULED sentinel, not a guess', () => {
-  // Rule 20: a bank statement line is chrome, so it is Reyner's. It ships as a
-  // sentinel and `scripts/check-unruled-copy.mjs` refuses a PRODUCTION build
-  // while it does. A guessed Indonesian statement line reaching a real bank
-  // statement is what this avoids - and the artifact's own description took three
-  // supersessions, two of them on exactly this surface.
-  assert.ok(COMPAT_COPY.invoiceDesc.includes('@@UNRULED'));
+test('the compat invoice description is RULED, and rule 20 holds on it', () => {
+  // Rule 20: a bank statement line is chrome, so it is Reyner's. This shipped as
+  // an `@@UNRULED@@` sentinel on 2026-09-07 rather than as a guess - the
+  // artifact's own description took three supersessions, two of them on exactly
+  // this surface - and he ruled it on 2026-09-08.
+  assert.equal(COMPAT_COPY.invoiceDesc, 'Katon - Compatibility Reading');
+
+  // Keyboard characters only, asserted on the string rather than promised in a
+  // comment. This is the value that reaches a real bank statement.
+  assert.ok(!/[—–‘’“”…]/u.test(COMPAT_COPY.invoiceDesc),
+    'no em-dash, en-dash, curly quote or ellipsis');
+
+  // Same form as the artifact's approved line, so the two read alike.
+  assert.match(COMPAT_COPY.invoiceDesc, /^Katon - /u);
 });
 
 // ── ruling C: the email ──

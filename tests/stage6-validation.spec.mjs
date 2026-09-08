@@ -22,7 +22,7 @@ import { createHash } from 'node:crypto';
 
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
-import { GLOSSARY } from '../lib/semantic/glossary.js';
+import { GLOSSARY, sweepableGlossary } from '../lib/semantic/glossary.js';
 import { VALIDATION_CHARTS, HOUR_UNKNOWN_CHARTS } from './bazi-validation.fixture.js';
 
 import { assembleFallback } from '../lib/render/fallback.js';
@@ -565,7 +565,10 @@ test('NO ENGINE STRING NAMES A PILLAR BY BARE WORD', () => {
       for (const [key, value] of Object.entries(node)) walk(value, path ? `${path}.${key}` : key);
     }
   };
-  walk(GLOSSARY, '');
+  // THE SWEPT VIEW, not the raw table: a template cell's slots are filled with
+  // two real archetype names first. A sweep asks what a READER could receive, and
+  // `{A}` is not a thing a reader can receive.
+  walk(sweepableGlossary(), '');
 
   assert.deepEqual(offenders, [],
     `glossary strings read as naming a pillar:\n  ${offenders.join('\n  ')}`);
@@ -1417,6 +1420,15 @@ test('NO ENGINE STRING WOULD TRIP THE STYLE GATE', () => {
       // - the exemption follows the sentinel, not the section, so it disappears
       // by itself as the rulings land rather than needing to be remembered.
       if (node.includes('@@UNRULED')) return;
+      // ── AND A TEMPLATE IS SWEPT FILLED, NOT SKIPPED, 2026-09-08 ──
+      // `sweepableGlossary()` substituted the slots above, so what is tested here
+      // is the sentence a reader actually receives. Braces would trip
+      // `style.code_leak` and they SHOULD - which is exactly why the raw template
+      // must never be what a sweep or a fact carries. Nothing is exempted: if the
+      // FILLED sentence trips a style pattern, that is a real finding about ruled
+      // copy and this test says so.
+      assert.equal(/[{}]/u.test(node), false,
+        `${path}: a slot survived sweepableGlossary()`);
       if (!RENDERED_FIELDS.has(path.split('.').at(-1))) return;
       for (const [category, regex] of patterns) {
         if (regex.test(node)) offenders.push(`${path} [${category}]: ${node.slice(0, 70)}`);
@@ -1426,7 +1438,7 @@ test('NO ENGINE STRING WOULD TRIP THE STYLE GATE', () => {
     if (node && typeof node === 'object') {
       for (const [k, v] of Object.entries(node)) walk(v, `${path}.${k}`);
     }
-  }(GLOSSARY, 'glossary'));
+  }(sweepableGlossary(), 'glossary'));
 
   assert.deepEqual(offenders, []);
 });

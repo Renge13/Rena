@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
 import { buildPairSemantic, variantKeysFor } from '../lib/semantic/pair.js';
-import { GLOSSARY } from '../lib/semantic/glossary.js';
+import { GLOSSARY, fillPairTemplate } from '../lib/semantic/glossary.js';
 import { assembleFallback } from '../lib/render/fallback.js';
 import { validateRendering } from '../lib/validate/index.js';
 import BLOCKLIST from '../lib/validate/blocklist.json' with { type: 'json' };
@@ -173,7 +173,12 @@ test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', ()
   // The authority on the shape is docs/content/compat-glossary-rulings.md, and
   // this test PARSES IT rather than restating its key list - a second copy of
   // the shape is the thing that would drift.
-  const md = readFileSync(path.join(ROOT, 'docs', 'content', 'compat-glossary-rulings.md'), 'utf8');
+  // BOTH rulings files, because the section is now the union of two tranches:
+  // the 24-cell tranche of 2026-09-08 (morning) and `p0_opening`, ruled the same
+  // evening once the floor's naming gap was recorded. Parsed, not restated.
+  const md = ['compat-glossary-rulings.md', 'compat-glossary-rulings-2.md']
+    .map((f) => readFileSync(path.join(ROOT, 'docs', 'content', f), 'utf8'))
+    .join('\n');
   const ruled = {};
   let heading = null;
   for (const line of md.split(/\r?\n/u)) {
@@ -187,7 +192,7 @@ test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', ()
     if (m) ruled[heading].push(m[1]);
   }
 
-  assert.equal(Object.keys(ruled).length, 24, 'the rulings file has 24 cells');
+  assert.equal(Object.keys(ruled).length, 25, 'the two rulings files have 25 cells');
 
   const cells = Object.keys(GLOSSARY.kompatibilitas).filter((k) => !k.startsWith('_'));
   assert.deepEqual(cells.slice().sort(), Object.keys(ruled).sort(),
@@ -202,7 +207,10 @@ test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', ()
     assert.deepEqual(have.slice().sort(), fields.slice().sort(), `${key} has exactly the ruled fields`);
     total += have.length;
   }
-  assert.equal(total, 46, '46 assignments, which is what --expect 46 checks');
+  // 46 from the first tranche plus p0_opening's one, which is what --expect 1
+  // checks on the second. `_template` is metadata and is stripped by the same
+  // `_`-prefix rule as `_note`, so it is not an assignment and does not count.
+  assert.equal(total, 47, '47 assignments across the two tranches');
 
   // NO SEEDS. Nothing was ruled for gift/cost/actionable, and a placeholder for a
   // string nobody has ruled is an invitation to invent one.
@@ -219,21 +227,34 @@ test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', ()
   assert.equal('quadrant' in GLOSSARY.kompatibilitas, false, 'quadrant.* folded into p5_q*');
 });
 
-test('THERE IS NO p0_names FACT, and the reason is recorded', () => {
-  // Dropped 2026-09-08 when the rulings landed. Three reasons, all in
-  // lib/semantic/pair.js: no opening cell was ruled; a fact with `entry: null`
-  // has `label: null`, which the glossary reserves for CONDITIONS, so the floor's
-  // identity clause tripped `fact.condition_named` as a HARD finding; and
-  // `RENDER_COPY.floorIdentity` is a single-subject sentence that could only ever
-  // have named one of the two people.
+test('THE OPENING FACT NAMES BOTH PEOPLE, and p0_names stays dropped', () => {
+  // ── THE HISTORY, KEPT, BECAUSE IT IS WHY THE CELL HAD TO BE RULED ──
+  // `p0_names` was dropped on 2026-09-08 (morning): no opening cell existed, and
+  // a fact with `entry: null` has `label: null`, which the glossary reserves for
+  // CONDITIONS - so the floor's identity clause tripped `fact.condition_named` as
+  // a HARD finding. `RENDER_COPY.floorIdentity` could only ever have named one of
+  // the two people anyway.
   //
-  // The opening obligation is unaffected: both names are in `core`, the compat
-  // prompt requires them in the first block, and `both_named` enforces it.
+  // Reyner ruled `p0_opening` the same evening. It is a TEMPLATE, so the sentence
+  // is his and the two names are the engine's, and NOTHING was invented to make
+  // this pass.
   const pj = pair(1, 2);
-  assert.equal(pj.facts.some((f) => f.id === 'p0_names'), false);
-  assert.ok(pj.core.a.archetype_name_id, 'A is named in core');
-  assert.ok(pj.core.b.archetype_name_id, 'and B is');
-  assert.notEqual(pj.core.a.archetype_name_id, pj.core.b.archetype_name_id);
+  assert.equal(pj.facts.some((f) => f.id === 'p0_names'), false, 'the null-entry fact stays dead');
+
+  const p0 = pj.facts.find((f) => f.id === 'p0_opening');
+  assert.ok(p0, 'the opening is a fact, so the FLOOR carries it too');
+  assert.equal(p0.hierarchy.role, 'spine');
+
+  const { archetype_name_id: a } = pj.core.a;
+  const { archetype_name_id: b } = pj.core.b;
+  assert.notEqual(a, b);
+  assert.ok(p0.label_meaning.includes(a), 'A is named in the opening');
+  assert.ok(p0.label_meaning.includes(b), 'and B is');
+
+  // THE BRACES NEVER SURVIVE. They trip style.code_leak, and a template that
+  // reached a reader would be the model's input echoed back at them.
+  assert.equal(/[{}]/u.test(p0.label_meaning), false, 'no slot survives substitution');
+  assert.equal(p0.label_meaning.includes('{A}'), false);
 });
 
 test('THE FLOOR PASSES STAGE 6 ON EVERY QUADRANT, with no sentinel in it', () => {
@@ -288,11 +309,19 @@ test('variantKeysFor NAMES THE CELL THE FACT ACTUALLY CARRIES', () => {
   const K = GLOSSARY.kompatibilitas;
   let checked = 0;
   for (const [x, y] of [[1, 2], [1, 12], [2, 6], [3, 7], [1, 3], [1, 101], [13, 11], [12, 6]]) {
-    for (const f of pair(x, y).facts) {
+    const pj = pair(x, y);
+    for (const f of pj.facts) {
       const keys = variantKeysFor(f);
       assert.ok(keys.length > 0, `${x}x${y} ${f.id} derives at least one key`);
       for (const k of keys) assert.ok(K[k], `${x}x${y} ${f.id} -> "${k}" is a real cell`);
-      assert.ok(keys.some((k) => K[k].label_meaning === f.label_meaning),
+      // A TEMPLATE CELL IS COMPARED FILLED. The fact carries the substituted
+      // sentence and the cell carries the slots, so the raw strings differ by
+      // design - and comparing raw would have made this assertion unfalsifiable
+      // for exactly the cell the substitution exists for.
+      const cellText = (k) => (K[k]._template
+        ? fillPairTemplate(K[k].label_meaning, pj.core.a.archetype_name_id, pj.core.b.archetype_name_id)
+        : K[k].label_meaning);
+      assert.ok(keys.some((k) => cellText(k) === f.label_meaning),
         `${x}x${y} ${f.id}: derived [${keys.join(', ')}] but the fact carries another cell`);
       checked += 1;
     }

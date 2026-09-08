@@ -43,9 +43,9 @@ test('STAGE6_VERSION moved, once, for this commit', () => {
   // The repo convention: a change to what Stage 6 ACCEPTS OR REJECTS bumps this
   // in the same commit. Two rejecting checks were added, so it moves once - not
   // twice, and not zero times.
-  // 1.20.0: both_named's floor exemption removed, now that p0_opening is ruled
-  // and the floor names both people (Reyner, 2026-09-08 evening).
-  assert.equal(STAGE6_VERSION, '1.20.0');
+  // 1.21.0: the penutup scoped by whether the READING carries any tension
+  // (Reyner, 2026-09-08, ruling on the measurement of the first scope).
+  assert.equal(STAGE6_VERSION, '1.21.0');
 });
 
 test('THE MIRROR IS UNTOUCHED: pairGuard returns [] for kind mirror', () => {
@@ -238,6 +238,9 @@ test('no_verdict SHIPS WITH NO PATTERNS, and its reader is not broken', () => {
 
 const PHRASE = 'Keduanya saling melengkapi dan tetap selaras.';
 
+/** Read from the ruled data, never retyped. */
+const TENSION = new Set(BLOCKLIST.style._pair_scope.tension_collapse.banned_in);
+
 /** Append text to the block carrying `factId`. Fails loudly if there is none. */
 const into = (rendering, factId, extra) => {
   const idx = rendering.blocks.findIndex((b) => (b.fact_ids || []).includes(factId));
@@ -309,19 +312,62 @@ test('BANNED: a low-fit quadrant block is a tension block', () => {
   assert.equal(tension(into(renderingFor(sj), 'p5_pull_fit', PHRASE), sj).length, 1);
 });
 
-test('THE PENUTUP IS SCANNED, and that is the ruled default', () => {
-  // The penutup carries no fact and therefore no variant, so it matches neither
-  // list and is scanned. **This is not a leftover: it is where the collision
-  // actually survives.** Re-gating the four real renders of this commit's red run
-  // showed the P3 exemption working on 4 of 4 and every one of them still
-  // rejected, because the model closes on "saling melengkapi" in the penutup.
-  //
-  // Reported to Reyner rather than fixed here: exempting the closing paragraph
-  // is a second ruling, and the penutup is where a harmony collapse would read
-  // most like a verdict.
+// ── THE PENUTUP, SCOPED BY THE READING (Reyner, 2026-09-08, second ruling) ──
+// The first ruling scoped BLOCKS, and measuring it found the collision was not
+// in a block: 4 of 4 real renders closed on "saling melengkapi" in the penutup
+// and still rejected, so block scoping moved the floor rate by zero. The penutup
+// carries no fact, so it is scoped by the WHOLE READING - scanned when any
+// tension fact is present, permitted only when none is.
+
+/** A pair with no tension key at all. 26 of 240 fixture pairs qualify. */
+const CALM_A = c('1995-06-01', '06:00');   // chart 4
+const CALM_B = c('1989-02-04', '04:00');   // chart 13
+
+test('THE PENUTUP IS SCANNED when the reading carries a tension', () => {
   const sj = buildPairSemantic(A, HARD_SEAT);
+  assert.ok(sj.facts.flatMap(variantKeysFor).some((k) => TENSION.has(k)),
+    'precondition: this pair carries a tension');
   const rendered = { ...renderingFor(sj), penutup: `${PENUTUP} ${PHRASE}` };
-  assert.equal(tension(rendered, sj).length, 1);
+  assert.equal(tension(rendered, sj).length, 1, 'harmony vocabulary in the close is the collapse');
+});
+
+test('THE PENUTUP IS PERMITTED when the reading carries none', () => {
+  const sj = buildPairSemantic(CALM_A, CALM_B);
+  const keys = sj.facts.flatMap(variantKeysFor);
+  assert.equal(keys.some((k) => TENSION.has(k)), false,
+    `precondition: no tension key in [${keys.join(' ')}]`);
+
+  const rendered = { ...renderingFor(sj), penutup: `${PENUTUP} ${PHRASE}` };
+  assert.deepEqual(tension(rendered, sj), [],
+    'there is no tension in this reading for the close to dissolve');
+});
+
+test('IT IS NOT SCOPED BY QUADRANT: a calm quadrant with a clashed seat is scanned', () => {
+  // The ruling says "any tension fact", not "a low-fit quadrant", and this is
+  // why: q1 and q3 are permitted BLOCK keys, so scoping the close by quadrant
+  // alone would permit harmony vocabulary over a clashed seat.
+  const pairs = [[A, HARD_SEAT], [c('1978-02-16', '14:30'), c('1984-04-21', '18:45')]];
+  let checked = 0;
+  for (const [x, y] of pairs) {
+    const sj = buildPairSemantic(x, y);
+    const keys = sj.facts.flatMap(variantKeysFor);
+    const seat = keys.find((k) => ['p2_clash', 'p2_harm', 'p2_punishment'].includes(k));
+    if (!seat) continue;
+    const rendered = { ...renderingFor(sj), penutup: `${PENUTUP} ${PHRASE}` };
+    assert.equal(tension(rendered, sj).length, 1, `${seat} keeps the close scanned`);
+    checked += 1;
+  }
+  assert.ok(checked > 0, 'at least one pair carried a difficult seat');
+});
+
+test('THE TENSION SET IS banned_in ITSELF, so the two cannot drift', () => {
+  // The penutup rule and the block rule read ONE list. A key added to banned_in
+  // becomes a tension for both at once, which is the only way to keep a
+  // "scanned when there is a tension" rule honest.
+  assert.deepEqual([...TENSION].sort(),
+    BLOCKLIST.style._pair_scope.tension_collapse.banned_in.slice().sort());
+  assert.ok(BLOCKLIST.style._pair_scope._penutup.includes('banned_in'),
+    'the data says so as well as the code');
 });
 
 test('A BLOCK CARRYING BOTH KEYS IS SCANNED: tension wins', () => {

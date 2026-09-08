@@ -703,5 +703,126 @@
    "Halus",
    "Pengertian"
   ]
+ },
+ "kompatibilitas": {
+  "_README": "THE PAIR READING'S GLOSSARY, KEYED BY VARIANT. Each key is a RELATION the engine can find, not a fact id, because lib/render/fallback.js picks text by what the pair actually carries: a clashed seat and a harmonised seat are one fact and two different things to say. The first shape of this section was keyed by fact id and could only ever have said one of them. The TEXT is Reyner's - he is the sole authority on Indonesian register (CLAUDE.md rule 20) - and none of it was authored by Claude Code or by Cowork. THE SHAPE IS THE RULINGS FILE'S: docs/content/compat-glossary-rulings.md, 24 cells, 46 assignments. 19 cells carry name_id + label_meaning, three of those also carry name_en (the P4 badges), and five carry label_meaning alone. NO gift_seed, cost_seed or actionable_seed: nothing was ruled for them, and a placeholder for a string nobody has ruled invites one to be invented. scripts/check-unruled-copy.mjs scans this section and REFUSES a production build while any placeholder survives. Applied by: node scripts/apply-rulings.mjs docs/content/compat-glossary-rulings.md --expect 46",
+  "p1_same": {
+   "_note": "stemRelation.cycle === same",
+   "name_id": "Inti Sejenis",
+   "label_meaning": "Inti diri kalian dibangun dari unsur yang sama. Sangat mudah saling paham, tapi juga rawan berbenturan di titik yang persis sama."
+  },
+  "p1_produces": {
+   "_note": "cycle is a_produces_b or b_produces_a. Direction-neutral: the renderer names who.",
+   "name_id": "Inti Menghidupi",
+   "label_meaning": "Unsur salah satu dari kalian memberi energi ke yang lain. Ada dinamika pengayom dan yang diayomi dengan alur yang konsisten."
+  },
+  "p1_controls": {
+   "_note": "cycle is a_controls_b or b_controls_a. Direction-neutral.",
+   "name_id": "Inti Menekan",
+   "label_meaning": "Salah satu elemen membatasi atau mengarahkan yang lain. Bisa menghadirkan struktur, tapi juga tekanan, tergantung dinamika kendali di antara kalian."
+  },
+  "p1_combination": {
+   "_note": "stemRelation.combination present - a 天干五合 pair. Metadata, never a transformation (ruling B, 2026-09-07).",
+   "name_id": "Pasangan Inti",
+   "label_meaning": "Inti diri kalian membentuk pasangan klasik dalam BaZi. Hubungan terasa alami sejak awal tanpa hambatan komunikasi yang berarti."
+  },
+  "p2_harmony": {
+   "_note": "dayBranchPair carries 六合.",
+   "name_id": "Kursi Terikat",
+   "label_meaning": "Kursi pasangan kalian saling mengunci. Tercipta daya tarik alami sejak awal yang bekerja secara spontan."
+  },
+  "p2_clash": {
+   "_note": "dayBranchPair carries 冲. Raises p2_reframe_required.",
+   "name_id": "Kursi Berbenturan",
+   "label_meaning": "Kursi pasangan kalian saling bertolak belakang. Dinamika berjalan intens, di mana gesekan kecil bisa terasa jauh lebih tajam."
+  },
+  "p2_harm": {
+   "_note": "dayBranchPair carries 害. Raises p2_reframe_required.",
+   "name_id": "Kursi Bergesekan",
+   "label_meaning": "Terjadi gesekan halus antar kursi pasangan. Gesekan ini bekerja perlahan lewat detail kecil yang menumpuk, bukan lewat konflik besar."
+  },
+  "p2_punishment": {
+   "_note": "dayBranchPair carries 刑. Raises p2_reframe_required.",
+   "name_id": "Kursi Bersimpul",
+   "label_meaning": "Kursi pasangan kalian terikat pada pola masa lalu. Pola lama ini berulang di tahap berbeda jika tidak disadari bersama."
+  },
+  "p2_reframe": {
+   "_note": "THE MANDATORY REFRAME. Required whenever p2_clash, p2_harm or p2_punishment fires. The spec's ethical spine: a clash is never a verdict. Rule 25 applies to both people - no advice to leave or to stay.",
+   "label_meaning": "Ini bukan penentu kegagalan. Gesekan pada kursi pasangan menandakan hubungan yang membutuhkan perhatian ekstra dan kesadaran penuh."
+  },
+  "p2_none": {
+   "_note": "dayBranchPair is empty. Not a deficiency; the seats simply do not interact.",
+   "name_id": "Kursi Independen",
+   "label_meaning": "Kursi pasangan kalian berjalan terpisah tanpa tarik-menarik khusus. Dinamika utama kalian berasal dari aspek bagan lainnya."
+  },
+  "p2_palace_frame": {
+   "_note": "A FRAME for the palace scans. The renderer names the pillar and reuses the p2_* names above for the relation, so a palace hit needs no cell of its own.",
+   "label_meaning": "Salah satu pilar di bagan dia terhubung langsung dengan kursi pasanganmu. Elemen hidupnya memengaruhi ranah terdekatmu."
+  },
+  "p3_supplies": {
+   "_note": "aSupplies or bSupplies is non-null. Direction-neutral: the renderer names who supplies whom.",
+   "name_id": "Penyeimbang Unsur",
+   "label_meaning": "Dia membawa elemen yang tidak dominan di baganmu. Kehadirannya secara alami memberi keseimbangan yang kamu butuhkan."
+  },
+  "p3_same_imbalance": {
+   "_note": "An element BOTH charts lack. Not a fault in either person.",
+   "name_id": "Tantangan Serupa",
+   "label_meaning": "Bagan kalian sama-sama minim elemen tertentu. Karena tidak ada penyeimbang otomatis di area ini, dukungan perlu dicari dari luar."
+  },
+  "p3_no_supply": {
+   "_note": "Neither direction supplies. Unreachable from the 13-chart fixture (base-rates run 1: 2.2.a held on 100.0% of 5000 pairs), and cell-ruled anyway so the floor is never silent on P3.",
+   "name_id": "Mandiri Elementar",
+   "label_meaning": "Tidak ada aliran elemen khusus yang saling mengisi. Hubungan berjalan mandiri tanpa rasa saling tergantung secara energi."
+  },
+  "p4_matching": {
+   "_note": "temperament.pattern === matching. Katon's framework, never presented as classical, and it ranks nothing (rule 25).",
+   "name_id": "Pola Cermin",
+   "name_en": "Matching Pattern",
+   "label_meaning": "Aspek dominan di bagan kalian identik. Saling memahami terjadi cepat, namun hal yang memicu kekesalan biasanya adalah refleksi diri sendiri."
+  },
+  "p4_related": {
+   "_note": "pattern === related.",
+   "name_id": "Pola Serumpun",
+   "name_en": "Related Pattern",
+   "label_meaning": "Karakter dominan kalian berakar dari rumpun yang sama dengan pendekatan berbeda. Tujuan akhir serupa, meski dieksekusi lewat cara berbeda."
+  },
+  "p4_contrasting": {
+   "_note": "pattern === contrasting.",
+   "name_id": "Pola Kontras",
+   "name_en": "Contrasting Pattern",
+   "label_meaning": "Karakter dominan kalian berasal dari kelompok berbeda. Cara pandang yang berbeda bisa memperluas perspektif jika dikomunikasikan terbuka."
+  },
+  "p5_q1": {
+   "_note": "pullFit.quadrant === q1. No score is ever shown beside these (rule doc 2.4).",
+   "name_id": "Tarikan Kuat, Ritme Seirama",
+   "label_meaning": "Chemistry terasa kuat dan rutinitas harian saling menopang. Kuncinya adalah menjaga keterbukaan agar kenyamanan tidak dianggap biasa."
+  },
+  "p5_q2": {
+   "_note": "quadrant === q2.",
+   "name_id": "Tarikan Kuat, Ritme Bergesek",
+   "label_meaning": "Magnet hubungan sangat kuat, namun pola keseharian sering bersimpangan. Dinamika terasa pekat dan menuntut kompromi jelas dalam rutinitas."
+  },
+  "p5_q3": {
+   "_note": "quadrant === q3.",
+   "name_id": "Tarikan Tenang, Ritme Seirama",
+   "label_meaning": "Rutinitas harian mengalir stabil meski tarikan emosional tumbuh bertahap. Hubungan berjalan tenang tanpa banyak gejolak luar."
+  },
+  "p5_q4": {
+   "_note": "quadrant === q4.",
+   "name_id": "Tarikan Tenang, Ritme Bergesek",
+   "label_meaning": "Tarikan alami minim dan ritme harian membutuhkan penyesuaian. Kelangsungan hubungan murni digerakkan oleh komitmen dan keputusan sadar."
+  },
+  "p7_strengths_lead": {
+   "_note": "Leads the two or three strengths.",
+   "label_meaning": "Poin yang saling menguatkan"
+  },
+  "p7_frictions_lead": {
+   "_note": "Leads the two or three frictions.",
+   "label_meaning": "Area yang membutuhkan tenggang rasa"
+  },
+  "p7_asks_lead": {
+   "_note": "Leads the one sentence on what the pairing asks of each.",
+   "label_meaning": "Komitmen yang dituntut dari masing-masing pihak"
+  }
  }
 }

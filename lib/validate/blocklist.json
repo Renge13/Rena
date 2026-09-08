@@ -310,5 +310,9 @@
   "_removed": {
     "style.adverbial": "DELETED 2026-08-17 (Reyner, on the 2026-08-18 rejection gallery). Was a token ban for a CONSTRUCTION defect. Measured over 40 runs: 14 findings, 9 of them the plain adverb secara konsisten, and NOT ONE was the construction the ban was written for. It also rejected secara lengkap, which the DEFERRED REGISTER already recorded as a sentence the product must be able to say. It was never the lever on the floor rate - the sole style finding on only 3 of 19 floors, and the sole finding of any kind on ZERO.",
     "style.hedging mungkin": "MOVED 2026-08-17 out of this file and into lib/validate/style.js#hedgeAboutReader. Golden rule 7 bans hedging INSIDE A CLAIM, and mungkin in a clause about a THIRD PARTY hedges that party guess, not the claim about her: Orang lain mungkin mengira X, padahal tujuanmu selalu sama is fully committed about her, and it is the salah_dikira shape the hooks are built on. Measured: 14 of 15 mungkin findings had a non-reader subject. cenderung, agak and sepertinya are UNCHANGED and stay here."
+  },
+  "verdict": {
+    "_rule": "A PAIR READING STATES NO OVERALL VERDICT AND NO SCORE (compat-p4-p5-rules.md 2.4). This list is EMPTY on purpose: the constructions that express a verdict are Indonesian - cocok, tidak cocok, a percentage, a rating - and Reyner is the sole authority on Indonesian register (rule 20). lib/validate/pair.js reads it and logs a FLAG per hit, which cannot fail a reading, so patterns can be fitted against real renders before any of them rejects anything. Adding a pattern here that REJECTS is a gate change: it bumps STAGE6_VERSION in the same commit, alone.",
+    "patterns": []
   }
 }

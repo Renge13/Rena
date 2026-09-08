@@ -43,6 +43,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 import { UPCOMING_COPY, COMPAT_COPY, PENDING } from '../lib/site/copy.js';
+import GLOSSARY from '../docs/content/glossary.json' with { type: 'json' };
 import { scanUnruled, SENTINEL } from '../scripts/check-unruled-copy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -186,14 +187,28 @@ test('the production gate is wired into prebuild AND VERCEL ACTUALLY INVOKES IT'
  * no code with the detector it is checking.
  */
 function pendingByRawSearch() {
-  // EVERY BANK THE GATE SCANS, 2026-09-07. This serialised UPCOMING_COPY alone,
-  // and when COMPAT_COPY acquired a sentinel the oracle computed 0 while the gate
-  // found 1 - so the conditional below expected an allowed build and got a
-  // refused one. The failure was loud, which is the only reason it is a two-line
-  // fix rather than a hole: an oracle that under-counts on a DIFFERENT bank than
-  // the gate reads would otherwise assert "must be allowed" over a live
-  // placeholder. Still a raw substring search sharing no code with scanUnruled.
-  return JSON.stringify([UPCOMING_COPY, COMPAT_COPY]).split(SENTINEL).length - 1;
+  // EVERY BANK THE GATE SCANS. This serialised UPCOMING_COPY alone until
+  // 2026-09-07, and COMPAT_COPY was added when it acquired a sentinel;
+  // `GLOSSARY.kompatibilitas` joined on 2026-09-08. Each time, the oracle
+  // computed 0 while the gate found placeholders, and the conditional below
+  // asserted "must be allowed" against a refused build - loudly, which is the
+  // only reason each was a two-line fix rather than a hole.
+  //
+  // ── AND IT DROPS METADATA KEYS, INDEPENDENTLY OF THE DETECTOR ──
+  // The glossary's `_README` EXPLAINS the sentinel, so it contains the literal
+  // string. `scanUnruled` skips `_`-prefixed keys for that reason. If this oracle
+  // did not, it would agree with the gate today (both non-zero) and DISAGREE the
+  // day every real string is ruled: the gate would allow the build and this would
+  // still count 1 and demand a refusal.
+  //
+  // The replacer below is written here rather than imported, so this stays an
+  // independent count. It shares the RULE with scanUnruled - skip `_` keys - and
+  // none of its code, which is the property this function exists for.
+  const stripped = JSON.stringify(
+    [UPCOMING_COPY, COMPAT_COPY, GLOSSARY.kompatibilitas],
+    (key, value) => (key.startsWith('_') ? undefined : value),
+  );
+  return stripped.split(SENTINEL).length - 1;
 }
 
 test('strict mode refuses exactly when placeholders remain', () => {

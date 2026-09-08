@@ -30,6 +30,7 @@
 // ============================================================
 
 import { UPCOMING_COPY, COMPAT_COPY } from '../lib/site/copy.js';
+import GLOSSARY from '../docs/content/glossary.json' with { type: 'json' };
 
 // ── EVERY BANK THAT CAN CARRY A SENTINEL, 2026-09-07 ──────
 // This scanned UPCOMING_COPY and nothing else, because that was the only bank
@@ -40,7 +41,28 @@ import { UPCOMING_COPY, COMPAT_COPY } from '../lib/site/copy.js';
 //
 // KEYED BY NAME so the report says WHICH bank, and a bank added without a row
 // here is the same hole again. When the next one appears, add it.
-const BANKS = { UPCOMING_COPY, COMPAT_COPY };
+//
+// ── `GLOSSARY.kompatibilitas` ADDED 2026-09-08, AND IT IS THE THIRD TIME ──
+// The pair reading's glossary section landed with 59 placeholders, and this gate
+// reported `OK No unruled copy in 2 bank(s)` against them - blind to the very
+// strings it exists to catch, for the same reason it was blind on 2026-09-07
+// (COMPAT_COPY) and never ran at all until 2026-09-08 (COWORK-BRIEF row 46).
+//
+// THE GLOSSARY IS NOT A COPY BANK AND IT STILL BELONGS HERE. It is engine content
+// rather than site chrome, but `lib/render/fallback.js` assembles the
+// deterministic FLOOR out of these strings - so an unruled glossary cell is
+// literally what a reader receives when the provider refuses. That is a stronger
+// reason to gate it than any string in `lib/site/copy.js`.
+//
+// Only the `kompatibilitas` section is scanned. The rest of the glossary is
+// Reyner-reviewed content with no sentinel in it, and widening the scan to the
+// whole file would make this gate's verdict depend on parts of the document
+// nobody is holding open.
+const BANKS = {
+  UPCOMING_COPY,
+  COMPAT_COPY,
+  'GLOSSARY.kompatibilitas': GLOSSARY.kompatibilitas,
+};
 
 /** The marker `lib/site/copy.js`'s PENDING() stamps into every unruled value. */
 export const SENTINEL = '@@UNRULED';
@@ -63,7 +85,21 @@ export function scanUnruled(node, path = 'UPCOMING_COPY', found = []) {
     return found;
   }
   if (node && typeof node === 'object') {
-    for (const [k, v] of Object.entries(node)) scanUnruled(v, `${path}.${k}`, found);
+    for (const [k, v] of Object.entries(node)) {
+      // ── UNDERSCORE KEYS ARE METADATA AND ARE SKIPPED, 2026-09-08 ──
+      // `_README`, `_note` and `_rule` document the bank; they are never rendered
+      // to anyone. The glossary's own `_README` EXPLAINS the sentinel and so
+      // contains the literal `@@UNRULED@@`, which this scanner counted as an
+      // unruled string - a detector matching its own documentation, and 1 of the
+      // 59 it first reported.
+      //
+      // It is a real false positive rather than a cosmetic one: it would have
+      // kept refusing production after every genuine string was ruled, and the
+      // obvious fix at that point is to edit the README rather than to notice the
+      // scanner is wrong.
+      if (k.startsWith('_')) continue;
+      scanUnruled(v, `${path}.${k}`, found);
+    }
   }
   return found;
 }

@@ -123,7 +123,11 @@ function randomBirth(rand) {
 }
 
 const PULL_CLAUSES = ['2.1.a', '2.1.b', '2.1.c', '2.1.d'];
-const FIT_CLAUSES = ['2.2.a', '2.2.b', '2.2.c'];
+// 2.2.a was DELETED by the V6 amendment (2026-09-08) and the module no longer
+// emits it. Leaving it here kept its held-count at 0 and tripped the "fit high
+// exceeds the scarcest held clause" invariant - the guard catching a stale
+// constant in its own file, which is the check working rather than a nuisance.
+const FIT_CLAUSES = ['2.2.b', '2.2.c'];
 const QUADRANTS = ['q1', 'q2', 'q3', 'q4'];
 const PATTERNS = ['matching', 'related', 'contrasting'];
 const RELATIONS = ['same_god', 'same_group', 'different_group'];
@@ -182,7 +186,17 @@ const palaceHarmOrPunishment = ({ branches }) => palaceOf(branches)
  * DISJUNCTION (2.1, any), fit is a CONJUNCTION (2.2, all).
  */
 const VARIANTS = {
-  V0: { note: 'current rule', pull: [pull_a, pull_b, pull_c, pull_d], fit: [fit_a_either, fit_b, fit_c_day] },
+  // V0 IS THE CURRENT RULE, and since the V6 amendment of 2026-09-08 the current
+  // rule IS V6 - narrowed 2.1.d, no 2.2.a, extended 2.2.c. So V0 and V6 are now
+  // the same rule set and print identical rows, which is not a redundancy: V0 is
+  // asserted per pair against the SHIPPED module, and V6 is the hypothetical run
+  // 2b measured. Their two rows agreeing is the verification that the module
+  // implements what was ruled.
+  V0: { note: 'current rule (= V6, ruled 2026-09-08)', pull: [pull_a, pull_b, pull_c, pull_d_month], fit: [fit_b, fit_c_day_palace] },
+  // Vpre is the rule as it stood BEFORE 2026-09-08. Runs 1 and 2 measured it as
+  // V0; keeping it under its own name is what lets run 3 show the amendment's
+  // effect in one table instead of across two documents.
+  Vpre: { note: 'the PRE-2026-09-08 rule (runs 1 and 2 called this V0)', pull: [pull_a, pull_b, pull_c, pull_d], fit: [fit_a_either, fit_b, fit_c_day] },
   V1: { note: 'drop 2.1.d', pull: [pull_a, pull_b, pull_c], fit: [fit_a_either, fit_b, fit_c_day] },
   V2: { note: '2.1.d = month branch only', pull: [pull_a, pull_b, pull_c, pull_d_month], fit: [fit_a_either, fit_b, fit_c_day] },
   V3: { note: 'V1 + palace harm/punishment lower fit', pull: [pull_a, pull_b, pull_c], fit: [fit_a_either, fit_b, fit_c_day_palace] },
@@ -365,34 +379,37 @@ function assertVariantMonotonicity(v, n) {
   const fail = (msg) => { throw new Error(`INVARIANT BREACH on pair ${n}: ${msg}`); };
   const high = (x) => x === 'high';
 
-  // V1's clauses are a subset of V2's, which are a subset of V0's.
+  // ── PULL ──
+  // Vpre reads all eight palace pairings; V2, V0 and V6 read the month branch
+  // only; V1, V3, V4 and V5 read none. So the clause sets nest, and narrowing can
+  // only remove pull.
   if (high(v.V1.pull) && !high(v.V2.pull)) fail('V1 pull high but V2 pull low');
-  if (high(v.V2.pull) && !high(v.V0.pull)) fail('V2 pull high but V0 pull low');
+  if (high(v.V2.pull) && !high(v.Vpre.pull)) fail('V2 pull high but Vpre pull low');
 
-  // V1, V3, V4 and V5 share one pull rule, so their pull must be identical.
+  // Identical pull rules must give IDENTICAL verdicts, not merely ordered ones -
+  // a one-sided implication would let a variant keep the wrong 2.1.d.
   for (const id of ['V3', 'V4', 'V5']) {
     if (v[id].pull !== v.V1.pull) fail(`${id} pull ${v[id].pull} != V1 pull ${v.V1.pull}`);
   }
+  for (const id of ['V0', 'V6']) {
+    if (v[id].pull !== v.V2.pull) fail(`${id} pull ${v[id].pull} != V2 pull ${v.V2.pull}`);
+  }
 
-  // 2.2.c extended can only lower fit; V0, V1 and V2 share the ruled 2.2.c.
-  if (v.V1.fit !== v.V0.fit) fail('V1 and V0 share the fit rule but disagree');
-  if (v.V2.fit !== v.V0.fit) fail('V2 and V0 share the fit rule but disagree');
-  if (high(v.V3.fit) && !high(v.V0.fit)) fail('V3 fit high but V0 fit low');
+  // ── FIT ──
+  // Vpre, V1 and V2 share the ruled pre-amendment fit; V3/V4/V5 extend 2.2.c and
+  // keep some form of 2.2.a; V0 and V6 extend 2.2.c and DROP 2.2.a.
+  if (v.V1.fit !== v.Vpre.fit) fail('V1 and Vpre share the fit rule but disagree');
+  if (v.V2.fit !== v.Vpre.fit) fail('V2 and Vpre share the fit rule but disagree');
+  if (v.V0.fit !== v.V6.fit) fail('V0 and V6 are the same rule set but their fit disagrees');
 
-  // 2.2.a tightened can only lower fit, both ways it is tightened.
+  // Extending 2.2.c can only remove fit.
+  if (high(v.V3.fit) && !high(v.Vpre.fit)) fail('V3 fit high but Vpre fit low');
+
+  // Tightening 2.2.a can only remove fit; DROPPING it can only add fit.
   for (const id of ['V4', 'V5']) {
     if (high(v[id].fit) && !high(v.V3.fit)) fail(`${id} fit high but V3 fit low`);
   }
-
-  // V6 shares V2's pull clause list exactly, so their pull verdicts must be
-  // IDENTICAL - not merely ordered. A one-sided implication would pass a V6 that
-  // had quietly kept the unrestricted 2.1.d.
-  if (v.V6.pull !== v.V2.pull) fail(`V6 pull ${v.V6.pull} != V2 pull ${v.V2.pull}`);
-
-  // V6's fit is V3's with 2.2.a DELETED, so V6's conjunction is a SUBSET of V3's:
-  // dropping a conjunct can only ADD fit. V3.fit high must therefore imply
-  // V6.fit high - the opposite direction from V4 and V5 above, which tighten it.
-  if (high(v.V3.fit) && !high(v.V6.fit)) fail('V3 fit high but V6 fit low');
+  if (high(v.V3.fit) && !high(v.V0.fit)) fail('V3 fit high but V0 fit low');
 }
 
 /** Same arithmetic as assertInvariants, per variant. */
@@ -469,13 +486,22 @@ function reportVariants({ variant, standalone, soleClause }, { charts, pairs, se
 // pairs. This checks THIS script's pipeline against those, so a wiring mistake
 // here (wrong module order, a swapped argument) fails against an outside answer
 // rather than only against its own arithmetic.
+// UPDATED 2026-09-08 FOR THE V6 AMENDMENT. Three of the six quadrants moved, and
+// each move is the amendment reaching a known pair rather than a defect:
+//   1 x 2   q1 -> q2   B's hour carries 害, which the extended 2.2.c now counts
+//   1 x 3   q3 -> q4   A's year and hour carry 害 into B's day branch
+//   12 x 6  q1 -> q2   B's hour carries 刑
+// The other three are unchanged. **These values are NOT copied from a run of this
+// script** - they are the ones tests/compat-pull-fit.spec.mjs asserts, each
+// hand-derived there from the amended clauses, which is what keeps this an
+// outside answer rather than the script checking itself.
 const KNOWN = [
-  [{ birthDate: '1989-09-13', birthTime: '09:00' }, { birthDate: '1990-03-04', birthTime: '14:00' }, 'q1'],
+  [{ birthDate: '1989-09-13', birthTime: '09:00' }, { birthDate: '1990-03-04', birthTime: '14:00' }, 'q2'],
   [{ birthDate: '1990-03-04', birthTime: '14:00' }, { birthDate: '1989-03-03', birthTime: '00:15' }, 'q1'],
   [{ birthDate: '1989-09-13', birthTime: '09:00' }, { birthDate: '1990-06-07', birthTime: '12:00' }, 'q2'],
-  [{ birthDate: '1989-09-13', birthTime: '09:00' }, { birthDate: '1992-04-20', birthTime: '08:00' }, 'q3'],
+  [{ birthDate: '1989-09-13', birthTime: '09:00' }, { birthDate: '1992-04-20', birthTime: '08:00' }, 'q4'],
   [{ birthDate: '1990-03-04', birthTime: '14:00' }, { birthDate: '1992-01-05', birthTime: '08:00' }, 'q4'],
-  [{ birthDate: '1990-06-07', birthTime: '12:00' }, { birthDate: '1989-03-03', birthTime: '00:15' }, 'q1'],
+  [{ birthDate: '1990-06-07', birthTime: '12:00' }, { birthDate: '1989-03-03', birthTime: '00:15' }, 'q2'],
 ];
 
 function selftest() {

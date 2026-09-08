@@ -111,11 +111,17 @@ test('PAID returns all five fact kinds, computed in memory', async () => {
     assert.ok(body.facts[side].main_profile, `${side} has a main_profile`);
   }
 
-  // And the relational facts are the real ones. Charts 1 x 2 is q1 with 2.1.d as
-  // the only pull clause, hand-derived in tests/compat-pull-fit.spec.mjs - so if
-  // this endpoint wired the two charts up in the wrong order or passed the
+  // And the relational facts are the real ones. Charts 1 x 2 is **q2** with 2.1.d
+  // as the only pull clause, hand-derived in tests/compat-pull-fit.spec.mjs - so
+  // if this endpoint wired the two charts up in the wrong order or passed the
   // modules the wrong arguments, this is where it shows.
-  assert.equal(body.facts.pullFit.quadrant, 'q1');
+  //
+  // IT WAS q1 UNTIL THE V6 AMENDMENT (2026-09-08) and the move is the rule
+  // change reaching the endpoint, not a defect here: this pair carries 害 at B's
+  // hour, which the extended 2.2.c now counts against fit. `pull_reasons` is
+  // unchanged at ['2.1.d'] - A's MONTH branch harmonises with B's day branch, so
+  // the narrowed clause still fires, from the other direction than it used to.
+  assert.equal(body.facts.pullFit.quadrant, 'q2');
   assert.deepEqual(body.facts.pullFit.pull_reasons, ['2.1.d']);
   assert.equal(body.facts.branchRelations.kind ?? 'grouped', 'grouped');
   assert.ok(Array.isArray(body.facts.branchRelations.bHitsASpousePalace));

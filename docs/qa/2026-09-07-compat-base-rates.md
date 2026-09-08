@@ -419,3 +419,126 @@ an eighth variant cannot leave it saying "six" — it said "SIX RULE SETS" as a 
 a relationship, and there is no reason to assume that population matches a uniform draw over 45 years
 of birthdates. V6's even spread is a property of the clause space, not a prediction about Katon's
 traffic — which does not exist for compat yet.
+
+---
+
+# RUN 3, 2026-09-08 — VERIFICATION, not exploration
+
+**V6 was RULED by Reyner on 2026-09-08 and `lib/compat/pullFit.js` now implements it.** This run
+exists to answer one question: does the shipped module reproduce the V6 row run 2b measured? It is
+not a search for a better rule set and no new variant was added to look for one.
+
+**Answer: yes, to the pair.**
+
+## THE COMMAND
+
+```
+$ node scripts/compat-base-rates.mjs --charts 2000 --pairs 5000 --variants
+```
+
+Same seed `20260907`, same 2000 charts, same 5000 ordered pairs as runs 1, 2 and 2b.
+
+## THE TABLE
+
+```
+charts=2000 pairs=5000 seed=20260907
+
+8 RULE SETS, SAME SEED AND SAME 5000 PAIRS
+
+        q1              q2              q3              q4          pull hi   fit hi   rule
+  V0   1074  21.5%    1284  25.7%    1047  20.9%    1595  31.9%    47.2%    42.4%   current rule (= V6, ruled 2026-09-08)
+  Vpre   3315  66.3%     428   8.6%    1088  21.8%     169   3.4%    74.9%    88.1%   the PRE-2026-09-08 rule (runs 1 and 2 called this V0)
+  V1   1136  22.7%     101   2.0%    3267  65.3%     496   9.9%    24.7%    88.1%   drop 2.1.d
+  V2   2117  42.3%     241   4.8%    2286  45.7%     356   7.1%    47.2%    88.1%   2.1.d = month branch only
+  V3    555  11.1%     682  13.6%    1566  31.3%    2197  43.9%    24.7%    42.4%   V1 + palace harm/punishment lower fit
+  V4    555  11.1%     682  13.6%    1565  31.3%    2198  44.0%    24.7%    42.4%   V3 + 2.2.a = rank-0 supplier, either direction
+  V5    555  11.1%     682  13.6%    1562  31.2%    2201  44.0%    24.7%    42.3%   V3 + 2.2.a = supply in BOTH directions
+  V6   1074  21.5%    1284  25.7%    1047  20.9%    1595  31.9%    47.2%    42.4%   V2's pull + V3's fit, 2.2.a deleted
+
+STANDALONE FIRE RATES              count      rate
+  palace 害/刑 present                 2863     57.3%
+  2.2.a ruled (either direction)     5000    100.0%
+  2.2.a rank-0 (either direction)    4976     99.5%
+  2.2.a both directions              4993     99.9%
+  2.1.a alone                         227      4.5%
+  2.1.b alone                         298      6.0%
+  2.1.c alone                         268      5.4%
+  2.1.d alone                        1121     22.4%
+```
+
+## THE VERIFICATION
+
+**`V0` and `V6` are now the same rule set, and their rows are identical.** That is the whole point of
+the run rather than a redundancy: **`V0` is asserted per pair against the SHIPPED module**, and `V6`
+is the local hypothetical run 2b measured. Two independent paths to the same 5000 verdicts.
+
+| | q1 | q2 | q3 | q4 | pull | fit |
+|---|---|---|---|---|---|---|
+| run 2b's **V6** (hypothetical, recorded 2026-09-07) | 1074 | 1284 | 1047 | 1595 | 47.2% | 42.4% |
+| run 3's **V0** (the shipped module, 2026-09-08) | 1074 | 1284 | 1047 | 1595 | 47.2% | 42.4% |
+
+Checked mechanically against the committed run-2b table rather than by eye:
+
+```
+run3 V0 numbers : ["1074  21.5%","1284  25.7%","1047  20.9%","1595  31.9%"]
+doc V6 row      : ["1074  21.5%","1284  25.7%","1047  20.9%","1595  31.9%"]  -> match: true
+```
+
+**`Vpre` reproduces run 1's table exactly** — 3315 / 428 / 1088 / 169, 74.9% / 88.1% — so the
+pre-amendment measurement is intact and the two rules can still be compared in one table rather than
+across two documents. Runs 1, 2 and 2b are unedited; this is appended.
+
+## THE ONE THING THAT MOVED THAT IS NOT THE QUADRANTS
+
+**2.1.a and 2.1.b now fire alone, and under the old rule they never did.**
+
+| clause fires ALONE | pre-amendment (run 2) | now |
+|---|---|---|
+| 2.1.a | **0** (0.0%) | 227 (4.5%) |
+| 2.1.b | **0** (0.0%) | 298 (6.0%) |
+| 2.1.c | 136 (2.7%) | 268 (5.4%) |
+| 2.1.d | 2506 (50.1%) | 1121 (22.4%) |
+
+This is run 2's finding 2 confirming itself. That finding said 2.1.a and 2.1.b were redundant **only
+in the presence of the wide 2.1.d** — every day-branch 六合 or 冲 also showed up somewhere in the
+eight palace pairings — and warned in those words that the consequence was NOT to delete them.
+Narrowing 2.1.d to the month branch makes both load-bearing: they now carry pull on 525 pairs
+between them that nothing else would have caught. **Had they been deleted on the strength of "fires
+alone: 0", this amendment would have silently lost those pairs.**
+
+## THE GUARDS
+
+**The local-V0-equals-the-shipped-module guard FIRED FIRST, and that firing was the proof the module
+had changed.** Before the script's local V0 was updated to the ruled rule:
+
+```
+Error: INVARIANT BREACH: local V0 disagrees with lib/compat/pullFit.js on pair 1
+  (2002-09-05 06:32 x 2000-08-06 07:50): local low/high/q3 vs module low/low/q4
+```
+
+Expected, and the reason the guard exists: it refuses to print a table whose V0 column is not what
+ships. It went quiet only after the local rule was brought into line.
+
+**A second guard caught a stale constant in the script's own file.** `FIT_CLAUSES` still listed
+`2.2.a`, which the module no longer emits, so its held-count sat at 0:
+
+```
+Error: INVARIANT BREACH: fit high=2121 exceeds scarcest held clause=0
+```
+
+That is the arithmetic check working on its own house rather than a nuisance — a table that printed
+`2.2.a  0  0.0%` beside a 42.4% fit-high rate would have read as a catastrophic clause failure
+rather than as a deleted clause.
+
+**The known-answer selftest needed updating and three of its six moved**, each traceable to the
+amendment: 1 x 2 q1 -> q2 and 1 x 3 q3 -> q4 (palace 害 now counts against fit), 12 x 6 q1 -> q2
+(palace 刑). **Those values were not copied from this script's output** — they are the ones
+`tests/compat-pull-fit.spec.mjs` asserts, hand-derived there from the amended clauses, which is what
+keeps the selftest an outside answer rather than the script agreeing with itself. 6/6 after.
+
+## THE CAVEAT, UNCHANGED AND STILL THE LIMIT
+
+**These are rates over RANDOM pairs, not couples**, and there is still **no oracle for a pair claim**.
+V6 is now the ruled rule because it distributes the four quadrants evenly, which is a property of the
+distribution and not evidence that any individual reading is true. Nothing measured here says
+otherwise, and no amount of re-running it will.

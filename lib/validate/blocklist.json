@@ -323,6 +323,27 @@
   },
   "verdict": {
     "_rule": "A PAIR READING STATES NO OVERALL VERDICT AND NO SCORE (compat-p4-p5-rules.md 2.4). This list is EMPTY on purpose: the constructions that express a verdict are Indonesian - cocok, tidak cocok, a percentage, a rating - and Reyner is the sole authority on Indonesian register (rule 20). lib/validate/pair.js reads it and logs a FLAG per hit, which cannot fail a reading, so patterns can be fitted against real renders before any of them rejects anything. Adding a pattern here that REJECTS is a gate change: it bumps STAGE6_VERSION in the same commit, alone.",
-    "patterns": []
+    "patterns": [
+      {
+        "pattern": "\\b(tidak |kurang |sangat )?cocok\\b",
+        "note": "THE VERDICT WORD. Rule doc 2.4 and the compat prompt's own WHAT THIS READING MUST NEVER DO both name it: no 'cocok' or 'tidak cocok' as a conclusion. The optional qualifier catches the graded forms, which are the same verdict with a dial on it. KNOWN COLLISION, RECORDED RATHER THAN NARROWED: 'cocok' also means 'suitable', and two RULED MIRROR strings use it that way - bintang.華蓋.gift_seed ('Pekerjaan yang ... sangat cocok untukmu') and elemen_hilang.木.cost_seed ('situasi yang sudah tidak cocok'). Neither can reach a pair reading: lib/validate/pair.js returns [] for kind !== 'pair', and 240 fixture pair floors were swept with zero hits. tests/compat-stage6-pair.spec.mjs pins both strings so the day anyone widens this check's scope, the test goes red before a reader sees a false rejection."
+      },
+      {
+        "pattern": "\\bberjodoh\\b|\\bjodoh\\b",
+        "note": "Destiny framing. 'Jodoh' is a predestined match, which is rule 25's fatalism and rule doc 2.4's verdict in one word - it says the outcome is already decided AND that it is favourable. Both forms, because the adjective and the noun are the same claim."
+      },
+      {
+        "pattern": "\\bpasangan (ideal|sempurna|tepat)\\b",
+        "note": "The verdict with the word 'cocok' avoided. A reading that will not say 'cocok' can still say 'pasangan ideal', and the constructions are what the ban is about rather than any one token."
+      },
+      {
+        "pattern": "\\b(layak|pantas) (dipertahankan|dilanjutkan|ditinggalkan)\\b",
+        "note": "A verdict phrased as advice about the relationship's future. 'Ditinggalkan' is in the list with the other two on purpose: rule 25 forbids advice to leave exactly as it forbids advice to stay, and a check that caught only the encouraging half would be taking a side."
+      },
+      {
+        "pattern": "\\b(harus|sebaiknya) (putus|pisah|bertahan)\\b",
+        "note": "The same verdict as an instruction. Rule 25: no telling the reader what to do about the relationship, in either direction."
+      }
+    ]
   }
 }

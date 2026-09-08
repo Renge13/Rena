@@ -19,9 +19,11 @@ import { buildSemanticJson } from '../lib/semantic/index.js';
 import { assembleFallback } from '../lib/render/fallback.js';
 import { validateRendering, STAGE6_VERSION } from '../lib/validate/index.js';
 import { pairGuard, REFRAME_OVERLAP } from '../lib/validate/pair.js';
+import { stricterDirective } from '../lib/validate/directive.js';
 import { styleGuard } from '../lib/validate/style.js';
 import { renderedText } from '../lib/validate/text.js';
 import BLOCKLIST from '../lib/validate/blocklist.json' with { type: 'json' };
+import { GLOSSARY, sweepableGlossary } from '../lib/semantic/glossary.js';
 
 const c = (d, t) => calculateBaziChart({ birthDate: d, birthTime: t });
 const A = c('1989-09-13', '09:00');
@@ -37,15 +39,18 @@ const renderingFor = (sj, mutate = (b) => b) => ({
   penutup: PENUTUP,
 });
 
-const codes = (findings) => findings.map((f) => f.code);
+// `check`, like every other guard. It was `code`, which made pair rejections
+// record as `undefined` in the QA tape and in the regeneration directive.
+const codes = (findings) => findings.map((f) => f.check);
 
 test('STAGE6_VERSION moved, once, for this commit', () => {
   // The repo convention: a change to what Stage 6 ACCEPTS OR REJECTS bumps this
   // in the same commit. Two rejecting checks were added, so it moves once - not
   // twice, and not zero times.
-  // 1.21.0: the penutup scoped by whether the READING carries any tension
-  // (Reyner, 2026-09-08, ruling on the measurement of the first scope).
-  assert.equal(STAGE6_VERSION, '1.21.0');
+  // 1.22.0: the five ruled verdict patterns (Reyner, 2026-09-08). They FLAG and
+  // reject nothing, but a blocklist pattern ADDED is a version bump either way -
+  // the constant answers "which gate saw this reading", not "which one failed it".
+  assert.equal(STAGE6_VERSION, '1.22.0');
 });
 
 test('THE MIRROR IS UNTOUCHED: pairGuard returns [] for kind mirror', () => {
@@ -87,7 +92,7 @@ test('both_named REJECTS a model render that names only one person', () => {
     const one = renderingFor(sj, (b, i) => (i === 0 ? { ...b, text: `${named} membuka bacaan ini.` } : b));
     const found = pairGuard(one, sj, JSON.stringify(one));
     assert.ok(codes(found).includes('pair.both_named'), `naming only ${named} is rejected`);
-    assert.equal(found.find((f) => f.code === 'pair.both_named').severity, 'hard');
+    assert.equal(found.find((f) => f.check === 'pair.both_named').severity, 'hard');
   }
 });
 
@@ -143,7 +148,7 @@ test('A FLOOR THAT LOST THE OPENING IS REJECTED, provider notwithstanding', () =
   };
   const found = pairGuard(stripped, sj, JSON.stringify(stripped));
   assert.ok(codes(found).includes('pair.both_named'));
-  assert.equal(found.find((f) => f.code === 'pair.both_named').severity, 'hard');
+  assert.equal(found.find((f) => f.check === 'pair.both_named').severity, 'hard');
   // Through the real door too, on the FLOOR's provider - the path the exemption
   // used to make unreachable.
   const gate = validateRendering(stripped, sj, { provider: 'module_assembly' });
@@ -172,7 +177,7 @@ test('reframe_present REJECTS a difficult seat whose block drops the reframe', (
   };
   const found = pairGuard(dropped, sj, JSON.stringify(dropped));
   assert.ok(codes(found).includes('pair.reframe_missing'));
-  assert.equal(found.find((f) => f.code === 'pair.reframe_missing').severity, 'hard');
+  assert.equal(found.find((f) => f.check === 'pair.reframe_missing').severity, 'hard');
 });
 
 test('reframe_present is SILENT when the seat is easy', () => {
@@ -199,20 +204,182 @@ test('the reframe threshold uses stemOverlap, ABOVE the coverage floor', () => {
   assert.ok(REFRAME_OVERLAP <= 1);
 });
 
-test('no_verdict SHIPS WITH NO PATTERNS, and its reader is not broken', () => {
-  // A check that fires and logs but rejects nothing is not a gate change, which
-  // is why it may travel in this commit at all. The patterns are Indonesian and
-  // therefore Reyner's.
-  assert.deepEqual(BLOCKLIST.verdict.patterns, []);
-  assert.ok(BLOCKLIST.verdict._rule.includes('STAGE6_VERSION'), 'the rule says what adding one costs');
+test('A PAIR FINDING IS ATTRIBUTABLE, in the tape and in the directive', () => {
+  // ── THE DEFECT THIS ASSERTS AGAINST WAS LIVE FOR A DAY ─────
+  // `lib/validate/pair.js` emitted `code` where every other guard emits `check`,
+  // and the two places that ATTRIBUTE a finding both read `check`:
+  //
+  //   lib/render/index.js:463         stage6: rejecting.map((f) => f.check)
+  //   lib/validate/directive.js:120   `- [${f.check}] ${scrubForbidden(...)}`
+  //
+  // Nothing failed, because severity is what the GATE reads. But a pair rejection
+  // was recorded in the QA tape as `undefined`, and the regeneration directive
+  // told the model `- [undefined] the opening block must name both people`. The
+  // n=10 run's rejection table could not have named a pair check even if one had
+  // fired - and the whole point of the n=20 run is a per-check count.
+  //
+  // Asserted through BOTH consumers, not by reading the field name, because the
+  // field name is exactly what was wrong and agreed with itself.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const floor = renderingFor(sj);
+  const stripped = {
+    ...floor,
+    blocks: floor.blocks.map((b, i) => (i === 0 ? { ...b, text: 'Bacaan ini tentang kalian.' } : b)),
+  };
+  const gate = validateRendering(stripped, sj, { provider: 'module_assembly' });
 
+  // 1. THE TAPE. This is the exact expression render/index.js records.
+  const tape = gate.findings.filter((f) => f.severity !== 'flag').map((f) => f.check);
+  assert.ok(tape.includes('pair.both_named'), `the tape names it: ${tape.join(', ')}`);
+  assert.equal(tape.includes(undefined), false, 'and nothing in the tape is undefined');
+
+  // 2. THE DIRECTIVE. The model is told which check rejected it.
+  const directive = stricterDirective(gate.findings, []);
+  assert.match(directive, /\[pair\.both_named\]/u);
+  assert.equal(directive.includes('[undefined]'), false);
+
+  // 3. EVERY GUARD AGREES ON THE FIELD, which is the invariant that failed.
+  for (const f of gate.findings) {
+    assert.equal(typeof f.check, 'string', `${JSON.stringify(f).slice(0, 80)} carries a check`);
+  }
+});
+
+// ============================================================
+// THE VERDICT PATTERNS (Reyner, 2026-09-08)
+// ============================================================
+
+/** Compiled the way lib/validate/style.js#compile does. Never reconstructed. */
+const VERDICT = BLOCKLIST.verdict.patterns
+  .map((e) => ({ regex: new RegExp(e.pattern, e.flags || 'iu'), source: e.pattern }));
+
+test("the five ruled patterns are present, and they are Reyner's", () => {
+  assert.deepEqual(BLOCKLIST.verdict.patterns.map((e) => e.pattern), [
+    String.raw`\b(tidak |kurang |sangat )?cocok\b`,
+    String.raw`\bberjodoh\b|\bjodoh\b`,
+    String.raw`\bpasangan (ideal|sempurna|tepat)\b`,
+    String.raw`\b(layak|pantas) (dipertahankan|dilanjutkan|ditinggalkan)\b`,
+    String.raw`\b(harus|sebaiknya) (putus|pisah|bertahan)\b`,
+  ]);
+  for (const e of BLOCKLIST.verdict.patterns) {
+    assert.ok(e.note && e.note.length > 40, `${e.pattern} carries its reason`);
+  }
+});
+
+test('EACH PATTERN FIRES on a sentence carrying it', () => {
+  // An instrument that cannot fail means nothing. Every one is shown hitting
+  // before any of them is trusted, and each probe is the construction the pattern
+  // was ruled for rather than a copy of the regex written back as prose.
+  const PROBES = [
+    [0, 'Kalian sangat cocok satu sama lain.'],
+    [0, 'Hubungan ini tidak cocok.'],
+    [0, 'Menurut bagan, kalian cocok.'],
+    [1, 'Kalian memang berjodoh.'],
+    [1, 'Ini soal jodoh, bukan usaha.'],
+    [2, 'Dia pasangan ideal untukmu.'],
+    [2, 'Kalian pasangan sempurna.'],
+    [3, 'Hubungan ini layak dipertahankan.'],
+    [3, 'Hubungan ini tidak pantas dilanjutkan.'],
+    [4, 'Sebaiknya putus saja.'],
+    [4, 'Kalian harus bertahan.'],
+  ];
+  for (const [i, text] of PROBES) {
+    assert.ok(VERDICT[i].regex.test(text), `/${VERDICT[i].source}/ fires on "${text}"`);
+  }
+
+  // And through the guard, which is the thing that ships.
   const sj = buildPairSemantic(A, HARD_SEAT);
   const rendered = renderingFor(sj);
-  assert.equal(
-    codes(pairGuard(rendered, sj, 'cocok sekali 95%')).includes('pair.verdict'),
-    false,
-    'with no patterns it rejects nothing, whatever the text',
-  );
+  const found = pairGuard(rendered, sj, 'Menurut bagan ini kalian sangat cocok dan berjodoh.');
+  const verdicts = found.filter((f) => f.check === 'pair.verdict');
+  assert.equal(verdicts.length, 2, 'both patterns in that sentence are reported');
+  assert.ok(verdicts.every((f) => f.severity === 'flag'));
+});
+
+test('THEY FLAG AND REJECT NOTHING, which is what lets them travel', () => {
+  // Ruled: land the patterns at `flag` first, fit them against real renders, then
+  // decide escalation on the count. A flag cannot fail a reading, so no floor rate
+  // can move on this commit and the n=20 run measures the patterns rather than
+  // being confounded by them.
+  //
+  // OWED, and written into NEXT.md rather than left as "a later ruling":
+  // escalate the verdict category to REJECT for pairs, decided on the n=20
+  // per-pattern flag count, as its own isolated gate change.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const rendered = { ...renderingFor(sj), penutup: 'Kalian sangat cocok dan berjodoh.' };
+  const gate = validateRendering(rendered, sj, { provider: 'module_assembly' });
+
+  const verdicts = gate.findings.filter((f) => f.check === 'pair.verdict');
+  assert.ok(verdicts.length >= 1, 'it sees the verdict');
+  assert.ok(verdicts.every((f) => f.severity === 'flag'), 'and only flags it');
+  assert.equal(gate.hard, false, 'nothing hard');
+  assert.equal(gate.ok, true, 'and the reading still passes, deliberately');
+});
+
+test('THE MIRROR IS EXEMPT BY SCOPE, and these two ruled strings prove it', () => {
+  // ── THE KNOWN COLLISION, PINNED ────────────────────────────
+  // `cocok` also means "suitable", and two RULED MIRROR strings use it that way.
+  // Reyner ruled the pattern lands UNCHANGED, because the check is pair-scoped and
+  // neither string can reach a pair reading - 240 fixture pair floors swept clean.
+  // THIS TEST IS THE TRIPWIRE ON THAT REASONING: the day anyone widens the scope,
+  // it goes red before a reader meets a false rejection of Reyner's own copy.
+  const collisions = [
+    GLOSSARY.bintang['華蓋'].gift_seed,
+    GLOSSARY.elemen_hilang['木'].cost_seed,
+  ];
+  for (const text of collisions) {
+    assert.ok(VERDICT[0].regex.test(text),
+      'precondition: this ruled mirror string really does hit pattern 0');
+  }
+
+  // AND THE GUARD NEVER SEES THEM. Not "does not currently fire" - returns []
+  // for a mirror, whatever the text.
+  const mirror = buildSemanticJson(A);
+  assert.equal(mirror.kind, 'mirror');
+  for (const text of collisions) {
+    assert.deepEqual(pairGuard(renderingFor(mirror), mirror, text), []);
+  }
+
+  // And through the real entry point, on a mirror reading that CONTAINS them.
+  const rendered = renderingFor(mirror, (b, i) => (i === 0
+    ? { ...b, text: `${b.text} ${collisions.join(' ')}` } : b));
+  const gate = validateRendering(rendered, mirror, { provider: 'module_assembly' });
+  assert.equal(gate.findings.some((f) => String(f.check).startsWith('pair.')), false,
+    'no pair check ever runs on a mirror reading');
+});
+
+test('NO RULED kompatibilitas CELL HITS A VERDICT PATTERN', () => {
+  // The pair-side half of the sweep, and the one that would be a real defect: a
+  // pattern firing on ruled compat copy would punish the renderer for carrying the
+  // glossary faithfully. Swept clean across all 25 cells before the patterns
+  // landed; asserted here so it stays true as cells are added.
+  const cells = Object.entries(sweepableGlossary().kompatibilitas)
+    .filter(([k]) => !k.startsWith('_'));
+  assert.ok(cells.length >= 25);
+  const offenders = [];
+  for (const [key, cell] of cells) {
+    for (const [field, value] of Object.entries(cell)) {
+      if (field.startsWith('_') || typeof value !== 'string') continue;
+      for (const { regex, source } of VERDICT) {
+        if (regex.test(value)) offenders.push(`${key}.${field} [/${source}/]`);
+      }
+    }
+  }
+  assert.deepEqual(offenders, []);
+});
+
+test('THE READER IS NOT BROKEN, which the empty period could never have shown', () => {
+  // RENAMED 2026-09-08. It was "no_verdict SHIPS WITH NO PATTERNS", and that
+  // claim is now false by design. What survives is the half that mattered.
+  assert.equal(BLOCKLIST.verdict.patterns.length, 5);
+  assert.ok(BLOCKLIST.verdict._rule.includes('STAGE6_VERSION'), 'the rule says what adding one costs');
+
+  // It reports, and every report is a FLAG. Ruled: nothing rejects until the
+  // n=20 flag count says which patterns earn it.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const rendered = renderingFor(sj);
+  const found = pairGuard(rendered, sj, 'cocok sekali 95%');
+  assert.ok(codes(found).includes('pair.verdict'), 'a live pattern is reported');
+  assert.ok(found.every((f) => f.severity === 'flag'), 'and only ever flagged');
 
   // ── AND IT WOULD ACTUALLY FIRE ONCE A PATTERN EXISTS ──
   // The first version read `blocklist?.verdict?.filter?.(...)`, and `verdict` is

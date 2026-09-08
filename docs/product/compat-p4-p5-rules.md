@@ -1,5 +1,6 @@
 <!--
-STATUS: RULED 2026-09-07 by Reyner. Written by Cowork from the worksheet of the same day
+STATUS: RULED 2026-09-07 by Reyner. AMENDED 2026-09-08 (V6) - section 2 only; see the
+AMENDED block above 2.1. P4 (section 1) is untouched. Written by Cowork from the worksheet of the same day
 (Claude project: KATON-compat-p4-p5-worksheet-2026-09-07.md) and Reyner's revision of P4.
 THIS FILE IS THE RULE. `lib/compat/temperament.js` and `lib/compat/pullFit.js` implement it and cite
 its section numbers; a change here is a behaviour change and ships with a red test first.
@@ -31,20 +32,89 @@ is "same element relation, polarity ignored", derived from `lib/bazi/tenGods.js`
 
 ## 2. P5 — pull / fit
 
+> ## AMENDED 2026-09-08 — V6, ruled by Reyner
+>
+> **Three clauses changed and one was deleted.** The evidence is
+> `docs/qa/2026-09-07-compat-base-rates.md`, **run 2b**, which put seven rule sets on one seed and
+> the same 5000 pairs. V6 is the row this amendment adopts:
+>
+> ```
+>   V0   q1 66.3%   q2  8.6%   q3 21.8%   q4  3.4%    pull 74.9%   fit 88.1%
+>   V6   q1 21.5%   q2 25.7%   q3 20.9%   q4 31.9%    pull 47.2%   fit 42.4%
+> ```
+>
+> V6 is the only measured shape in which all four quadrants carry real weight — spread 20.9% to
+> 31.9%, none vestigial, none dominant. Under V0 two thirds of readers were told q1 and 3.4% ever
+> saw q4, so two of the four quadrants' content would have been written for almost nobody.
+>
+> **WHAT THIS AMENDMENT IS NOT EVIDENCE OF.** An even spread is a property of the distribution, not
+> of the reading being true, and **there is still no oracle for a pair claim** (Joey Yap's plotter
+> is single-chart, probed 2026-08-12). A rule set can distribute beautifully and describe nothing.
+> These rates are also over RANDOM pairs, not couples. What run 2b supports is narrower and is the
+> whole basis of the change: of seven measured shapes, this is the one where authoring four
+> quadrants' worth of content is not mostly wasted.
+
 ### 2.1 PULL (is there a charge between the two charts?)
 `pull = high` when ANY of:
 - 2.1.a `dayBranchPair` contains harmony 六合
 - 2.1.b `dayBranchPair` contains clash 冲 — **counted as pull on purpose**: the spec's P2 reframe
   calls a clashed seat "intensity and transformation"; intensity is attraction, not fit
 - 2.1.c `combination` present (Day Masters are a 天干五合 pair)
-- 2.1.d any entry of `bHitsASpousePalace` or `aHitsBSpousePalace` is harmony or clash
+- 2.1.d **the other person's MONTH branch harmonises or clashes with your Day Branch.**
+  Concretely: an entry of `bHitsASpousePalace` or `aHitsBSpousePalace` whose
+  `from.position === 'month'` and whose relation is 六合 or 冲. **NOT all four pillars.**
+
+  *Amended 2026-09-08.* It read "any entry of `bHitsASpousePalace` or `aHitsBSpousePalace` is
+  harmony or clash", which scanned all EIGHT pairings — four of B's branches against A's day
+  branch, plus the mirror. At roughly two of twelve branches relating to any given branch, a hit
+  was close to certain: **it fired on 72.1% of pairs and supplied almost the whole of pull** (74.9%
+  overall). Narrowing it to the month branch takes pull-high to 47.2%. The month branch is the
+  choice rather than an arbitrary narrowing because it is the seat the strength engine already
+  treats as decisive — 得令, the season the Day Master is born into.
 Otherwise `pull = low`.
 
 ### 2.2 FIT (do the energetics hold each other up day to day?)
 `fit = high` when ALL of:
-- 2.2.a `aSupplies` or `bSupplies` is non-null
-- 2.2.b `sameImbalance` is false
-- 2.2.c `dayBranchPair` contains neither harm 害 nor punishment 刑
+- ~~2.2.a `aSupplies` or `bSupplies` is non-null~~ **DELETED 2026-09-08.**
+
+  **A conjunct that never fails is not a check.** It is a line that reads like a safeguard, costs a
+  reader's trust when they find it, and is counted in reasoning about what FIT means. Measured on
+  5000 pairs, in every form proposed:
+
+  | form of 2.2.a | held | so it failed on |
+  |---|---|---|
+  | as ruled — a supplier in either direction | **100.0%** | 0 of 5000 |
+  | tightened to the receiver's rank-0 favourable element | **99.5%** | 24 |
+  | tightened to supply in BOTH directions | **99.9%** | 7 |
+  | **deleted entirely** | — | fit-high **42.4%**, which is V3's 42.4% exactly |
+
+  The last row is the decisive one: V3 keeps the ruled 2.2.a and V6 has none, and their fit-high
+  rates are identical. The clause's presence moved fit on zero pairs. **Tightening it was tried
+  first and refuted** — that is what the middle two rows are — so this is a deletion after two
+  proposed repairs failed, not a deletion in preference to repairing it.
+
+  **What is NOT being claimed:** that element supply is irrelevant to compatibility. Only that
+  *"does either chart hold any of the elements the other's verdict favours"* is a question whose
+  answer is always yes across two whole charts, so asking it decides nothing. A different quantity
+  might; that would be a new clause with its own evidence, not this one restored.
+- 2.2.b `sameImbalance` **is empty.**
+
+  *Amended 2026-09-08, wording only — no behaviour change.* It read "is false". The value is not a
+  boolean: `lib/compat/complementarity.js` emits it as the LIST of elements absent from BOTH
+  charts, empty when there is none. "Is empty" is what the code has always done and what the spec
+  now says.
+- 2.2.c `dayBranchPair` contains neither harm 害 nor punishment 刑, **AND no entry of
+  `bHitsASpousePalace` or `aHitsBSpousePalace` is 害 or 刑 either.**
+
+  *Extended 2026-09-08.* It read only the day pair. Palace 害/刑 is present on **57.3%** of pairs,
+  so folding it in is the single largest lever in the whole rule: fit-high goes from 88.1% to
+  42.4%. That is deliberate — under the old clause, fit was high for seven readers in eight, and a
+  verdict that lands on seven in eight is not a verdict.
+
+  Note the ASYMMETRY with 2.1.d, which is not an oversight: 2.1.d reads only the MONTH branch,
+  2.2.c reads ALL palace entries. Pull asks whether there is a charge, and the month seat is where
+  the ruling locates it; fit asks whether the two hold each other up day to day, and friction
+  anywhere in the chart counts against that.
 Otherwise `fit = low`.
 
 ### 2.3 Quadrant

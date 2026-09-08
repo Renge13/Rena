@@ -18,7 +18,7 @@ import { test } from 'node:test';
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
 import { buildPairSemantic, variantKeysFor } from '../lib/semantic/pair.js';
-import { GLOSSARY } from '../lib/semantic/glossary.js';
+import { GLOSSARY, fillPairTemplate } from '../lib/semantic/glossary.js';
 import { assembleFallback } from '../lib/render/fallback.js';
 import { validateRendering } from '../lib/validate/index.js';
 import BLOCKLIST from '../lib/validate/blocklist.json' with { type: 'json' };
@@ -309,11 +309,19 @@ test('variantKeysFor NAMES THE CELL THE FACT ACTUALLY CARRIES', () => {
   const K = GLOSSARY.kompatibilitas;
   let checked = 0;
   for (const [x, y] of [[1, 2], [1, 12], [2, 6], [3, 7], [1, 3], [1, 101], [13, 11], [12, 6]]) {
-    for (const f of pair(x, y).facts) {
+    const pj = pair(x, y);
+    for (const f of pj.facts) {
       const keys = variantKeysFor(f);
       assert.ok(keys.length > 0, `${x}x${y} ${f.id} derives at least one key`);
       for (const k of keys) assert.ok(K[k], `${x}x${y} ${f.id} -> "${k}" is a real cell`);
-      assert.ok(keys.some((k) => K[k].label_meaning === f.label_meaning),
+      // A TEMPLATE CELL IS COMPARED FILLED. The fact carries the substituted
+      // sentence and the cell carries the slots, so the raw strings differ by
+      // design - and comparing raw would have made this assertion unfalsifiable
+      // for exactly the cell the substitution exists for.
+      const cellText = (k) => (K[k]._template
+        ? fillPairTemplate(K[k].label_meaning, pj.core.a.archetype_name_id, pj.core.b.archetype_name_id)
+        : K[k].label_meaning);
+      assert.ok(keys.some((k) => cellText(k) === f.label_meaning),
         `${x}x${y} ${f.id}: derived [${keys.join(', ')}] but the fact carries another cell`);
       checked += 1;
     }

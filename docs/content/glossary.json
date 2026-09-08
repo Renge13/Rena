@@ -709,7 +709,7 @@
   "p0_opening": {
    "_note": "THE OPENING. Ruled 2026-09-08 in docs/content/compat-glossary-rulings-2.md, and it closes the gap that made both_named exempt on the floor: with no ruled opening cell the module-assembly floor named neither person. A TEMPLATE - {A} and {B} are the two archetype name_id values, substituted by lib/semantic/pair.js at fact-build time. Braces trip style.code_leak, so _template: true tells every glossary sweep to test the SUBSTITUTED text. The template itself is never served.",
    "_template": true,
-   "label_meaning": "@@UNRULED: kompat_p0_opening@@"
+   "label_meaning": "Bacaan ini tentang kamu, {A}, dan {B}."
   },
   "p1_same": {
    "_note": "stemRelation.cycle === same",

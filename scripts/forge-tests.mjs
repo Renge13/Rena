@@ -170,13 +170,36 @@ t('priceFor returns the live tier, and the override reaches the other one', () =
   assert.throws(() => priceFor('nope'), /Unknown SKU/);
 });
 
-t('compat is priced but NOT sellable until Prompt E ships its fulfillment', () => {
-  assert.deepStrictEqual(SELLABLE_SKUS, ['artifact']);
-  assert.strictEqual(isSellable('artifact'), true);
-  assert.strictEqual(isSellable('compat'), false, 'no taking money for an unbuilt product');
+// ── THIS TEST HELD ITS OWN COPY OF THE LIST AND WENT STALE, 2026-09-08 ──
+// It asserted `SELLABLE_SKUS === ['artifact']` and read "NOT sellable until
+// Prompt E ships its fulfillment". X-b1 shipped that fulfillment - `a530d56`,
+// 2026-09-07, "Compat becomes sellable" - and CI went red on main for a day
+// while the branch suite stayed green, because `npm test` does not run this
+// file: only `npm run report:forge` does, in the accuracy workflow.
+//
+// The irony is worth keeping. `290b236` (2026-09-02) is titled "Read the price
+// ladder from lib/pricing.js instead of keeping a second copy" and fixed exactly
+// this defect one field over, leaving the sellable list hardcoded three lines
+// below the comment explaining why hardcoding is the defect.
+//
+// SO THE PROPOSITION CHANGED RATHER THAN THE LITERAL. What this test owes anyone
+// is that `isSellable` is the list and nothing else, and that the DEFAULT is
+// sellable - the invariant that actually protects a customer, since `DEFAULT_SKU`
+// is what an invoice falls back to. Which products are on the list is a product
+// decision (docs/product/paid-product-map.md), not this file's to restate.
+t('isSellable IS the list, and the default is on it', () => {
+  for (const sku of SELLABLE_SKUS) {
+    assert.strictEqual(isSellable(sku), true, `${sku} is sellable`);
+  }
   assert.strictEqual(isSellable('anything-else'), false);
   assert.strictEqual(isSellable(undefined), false);
+  assert.ok(SELLABLE_SKUS.length > 0, 'something is for sale');
   assert.ok(isSellable(DEFAULT_SKU), 'the default must itself be sellable');
+  // Every sellable SKU must be priced, or checkout would ask for an amount the
+  // ladder cannot supply. That is the join the two tables owe each other.
+  for (const sku of SELLABLE_SKUS) {
+    assert.ok(Number.isFinite(priceFor(sku)), `${sku} has a live price`);
+  }
 });
 
 // WEBHOOK AMOUNT GATE (amountMatchesSku — pure) — REQUIRED.

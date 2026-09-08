@@ -779,6 +779,32 @@ artifacts:
   reading, the card or the paid path is local and then production AFTER the merge, with no stage in
   between.** A verification plan that says "check it on the preview" cannot run.
 
+## OWED ON THE n=20 RE-MEASURE, 2026-09-08
+
+**One item, and it is OWED rather than deferred: it has a decider, a trigger and a shape.**
+
+- **THE VERDICT CATEGORY BECOMES A REJECT FOR PAIRS.** Reyner's five patterns landed at
+  `STAGE6_VERSION 1.22.0` at `flag` severity, which cannot fail a reading - deliberately, so the
+  n=20 run measures them instead of being confounded by them.
+  - **Decided on:** the n=20 per-pattern flag count. **The n=20 report MUST carry it**, broken out
+    per pattern rather than pooled: a category count cannot tell you whether `cocok` is firing
+    forty times and the other four never.
+  - **Shape:** an isolated gate change with its own `STAGE6_VERSION` bump, carrying nothing else.
+  - **Reyner rules it.** The patterns are Indonesian constructions (rule 20) and so is the question
+    of which of them a reading may never contain.
+  - **The known collision is already pinned rather than open:** `cocok` also means "suitable", and
+    two ruled MIRROR strings use it that way (`bintang.華蓋.gift_seed`,
+    `elemen_hilang.木.cost_seed`). Unreachable, because the check is pair-scoped - 240 fixture pair
+    floors swept clean - and `tests/compat-stage6-pair.spec.mjs` holds both strings so widening the
+    scope goes red first. **Escalating to reject does not touch that; widening the scope would.**
+
+**AND TWO THINGS THE n=20 RUN IS NOT ALLOWED TO DO QUIETLY.** `style.tension_collapse` rejects
+`tidak selaras` - "NOT in harmony", a sentence that names the friction - because it bans a TOKEN
+where the defect is a CONSTRUCTION (`docs/qa/2026-09-08-compat-penutup-cause.md`). A negation
+carve-out is Reyner's and is not taken. And the finding-shape fix in the same commit as the patterns
+changes the regeneration DIRECTIVE for any pair carrying a pair finding, so the n=20 is not
+comparable to the n=10 on regeneration behaviour and must say so.
+
 ## STILL UNRULED
 
 - **Whether BREADTH becomes an explicit gate requirement.** Only 7 of 13 facts on chart 5 are

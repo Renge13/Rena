@@ -705,134 +705,124 @@
   ]
  },
  "kompatibilitas": {
-  "_README": "THE PAIR READING'S GLOSSARY. Every string here is an @@UNRULED@@ placeholder. The KEY SET is Cowork's and the TEXT is Reyner's - he is the sole authority on Indonesian register (CLAUDE.md rule 20), and no Indonesian prose in this section was authored by Claude Code or by Cowork. WHY PLACEHOLDERS RATHER THAN DRAFTS: lib/render/fallback.js assembles the deterministic floor out of these very strings, so whatever is here IS what a reader gets when Gemini refuses. A plausible draft would ship as a real reading the first time the provider failed. scripts/check-unruled-copy.mjs scans this section and REFUSES a production build while any placeholder survives. That is intended, and it is why prompt X-b2's commit 5 - the floor-rate measurement - waits for the rulings: a floor rate measured on placeholders measures nothing. Applied by scripts/apply-rulings.mjs --expect <N> when ruled.",
-  "p0_names": {
-   "_note": "The opening. BOTH archetype names must appear - the pair analogue of the mirror's archetype opening obligation.",
-   "name_id": "@@UNRULED: kompat_p0_names_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p0_names_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p0_names_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p0_names_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p0_names_actionable@@"
+  "_README": "THE PAIR READING'S GLOSSARY, KEYED BY VARIANT. Each key is a RELATION the engine can find, not a fact id, because lib/render/fallback.js picks text by what the pair actually carries: a clashed seat and a harmonised seat are one fact and two different things to say. The first shape of this section was keyed by fact id and could only ever have said one of them. The TEXT is Reyner's - he is the sole authority on Indonesian register (CLAUDE.md rule 20) - and none of it was authored by Claude Code or by Cowork. THE SHAPE IS THE RULINGS FILE'S: docs/content/compat-glossary-rulings.md, 24 cells, 46 assignments. 19 cells carry name_id + label_meaning, three of those also carry name_en (the P4 badges), and five carry label_meaning alone. NO gift_seed, cost_seed or actionable_seed: nothing was ruled for them, and a placeholder for a string nobody has ruled invites one to be invented. scripts/check-unruled-copy.mjs scans this section and REFUSES a production build while any placeholder survives. Applied by: node scripts/apply-rulings.mjs docs/content/compat-glossary-rulings.md --expect 46",
+  "p1_same": {
+   "_note": "stemRelation.cycle === same",
+   "name_id": "@@UNRULED: kompat_p1_same_name@@",
+   "label_meaning": "@@UNRULED: kompat_p1_same_meaning@@"
   },
-  "p1_stem_relation": {
-   "_note": "P1: how the two Day Masters meet on the five-element cycle. Carries the 天干五合 transformation target as METADATA when present, never as a transformation (ruling B, 2026-09-07).",
-   "name_id": "@@UNRULED: kompat_p1_stem_relation_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p1_stem_relation_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p1_stem_relation_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p1_stem_relation_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p1_stem_relation_actionable@@"
+  "p1_produces": {
+   "_note": "cycle is a_produces_b or b_produces_a. Direction-neutral: the renderer names who.",
+   "name_id": "@@UNRULED: kompat_p1_produces_name@@",
+   "label_meaning": "@@UNRULED: kompat_p1_produces_meaning@@"
   },
-  "p2_day_pair": {
-   "_note": "P2: the two Day Branches, the seat the spec reads as the spouse palace. THE REFRAME IS REQUIRED HERE when the pair carries 冲, 害 or 刑 - see reframe below.",
-   "name_id": "@@UNRULED: kompat_p2_day_pair_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p2_day_pair_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p2_day_pair_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p2_day_pair_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p2_day_pair_actionable@@"
+  "p1_controls": {
+   "_note": "cycle is a_controls_b or b_controls_a. Direction-neutral.",
+   "name_id": "@@UNRULED: kompat_p1_controls_name@@",
+   "label_meaning": "@@UNRULED: kompat_p1_controls_meaning@@"
   },
-  "p2_b_hits_a": {
-   "_note": "P2: B's branches against A's day branch, each named by B's pillar.",
-   "name_id": "@@UNRULED: kompat_p2_b_hits_a_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p2_b_hits_a_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p2_b_hits_a_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p2_b_hits_a_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p2_b_hits_a_actionable@@"
+  "p1_combination": {
+   "_note": "stemRelation.combination present - a 天干五合 pair. Metadata, never a transformation (ruling B, 2026-09-07).",
+   "name_id": "@@UNRULED: kompat_p1_combination_name@@",
+   "label_meaning": "@@UNRULED: kompat_p1_combination_meaning@@"
   },
-  "p2_a_hits_b": {
-   "_note": "P2: the mirror direction.",
-   "name_id": "@@UNRULED: kompat_p2_a_hits_b_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p2_a_hits_b_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p2_a_hits_b_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p2_a_hits_b_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p2_a_hits_b_actionable@@"
+  "p2_harmony": {
+   "_note": "dayBranchPair carries 六合.",
+   "name_id": "@@UNRULED: kompat_p2_harmony_name@@",
+   "label_meaning": "@@UNRULED: kompat_p2_harmony_meaning@@"
   },
-  "p3_a_supplies": {
-   "_note": "P3: an element A holds that B's strength verdict favours.",
-   "name_id": "@@UNRULED: kompat_p3_a_supplies_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p3_a_supplies_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p3_a_supplies_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p3_a_supplies_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p3_a_supplies_actionable@@"
+  "p2_clash": {
+   "_note": "dayBranchPair carries 冲. Raises p2_reframe_required.",
+   "name_id": "@@UNRULED: kompat_p2_clash_name@@",
+   "label_meaning": "@@UNRULED: kompat_p2_clash_meaning@@"
   },
-  "p3_b_supplies": {
-   "_note": "P3: the mirror direction.",
-   "name_id": "@@UNRULED: kompat_p3_b_supplies_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p3_b_supplies_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p3_b_supplies_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p3_b_supplies_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p3_b_supplies_actionable@@"
+  "p2_harm": {
+   "_note": "dayBranchPair carries 害. Raises p2_reframe_required.",
+   "name_id": "@@UNRULED: kompat_p2_harm_name@@",
+   "label_meaning": "@@UNRULED: kompat_p2_harm_meaning@@"
+  },
+  "p2_punishment": {
+   "_note": "dayBranchPair carries 刑. Raises p2_reframe_required.",
+   "name_id": "@@UNRULED: kompat_p2_punishment_name@@",
+   "label_meaning": "@@UNRULED: kompat_p2_punishment_meaning@@"
+  },
+  "p2_reframe": {
+   "_note": "THE MANDATORY REFRAME. Required whenever p2_clash, p2_harm or p2_punishment fires. The spec's ethical spine: a clash is never a verdict. Rule 25 applies to both people - no advice to leave or to stay.",
+   "label_meaning": "@@UNRULED: kompat_p2_reframe_meaning@@"
+  },
+  "p2_none": {
+   "_note": "dayBranchPair is empty. Not a deficiency; the seats simply do not interact.",
+   "name_id": "@@UNRULED: kompat_p2_none_name@@",
+   "label_meaning": "@@UNRULED: kompat_p2_none_meaning@@"
+  },
+  "p2_palace_frame": {
+   "_note": "A FRAME for the palace scans. The renderer names the pillar and reuses the p2_* names above for the relation, so a palace hit needs no cell of its own.",
+   "label_meaning": "@@UNRULED: kompat_p2_palace_frame_meaning@@"
+  },
+  "p3_supplies": {
+   "_note": "aSupplies or bSupplies is non-null. Direction-neutral: the renderer names who supplies whom.",
+   "name_id": "@@UNRULED: kompat_p3_supplies_name@@",
+   "label_meaning": "@@UNRULED: kompat_p3_supplies_meaning@@"
   },
   "p3_same_imbalance": {
-   "_note": "P3: an element BOTH charts lack. Not a fault in either person - a shared blind spot.",
+   "_note": "An element BOTH charts lack. Not a fault in either person.",
    "name_id": "@@UNRULED: kompat_p3_same_imbalance_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p3_same_imbalance_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p3_same_imbalance_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p3_same_imbalance_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p3_same_imbalance_actionable@@"
+   "label_meaning": "@@UNRULED: kompat_p3_same_imbalance_meaning@@"
   },
-  "p4_temperament": {
-   "_note": "P4: the pattern badge. Katon's interpretive framework, NOT a claim that classical BaZi defines these three categories (ruling P4, 2026-09-07). It ranks nothing: matching is not good and contrasting is not bad (rule 25).",
-   "name_id": "@@UNRULED: kompat_p4_temperament_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p4_temperament_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p4_temperament_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p4_temperament_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p4_temperament_actionable@@"
+  "p3_no_supply": {
+   "_note": "Neither direction supplies. Unreachable from the 13-chart fixture (base-rates run 1: 2.2.a held on 100.0% of 5000 pairs), and cell-ruled anyway so the floor is never silent on P3.",
+   "name_id": "@@UNRULED: kompat_p3_no_supply_name@@",
+   "label_meaning": "@@UNRULED: kompat_p3_no_supply_meaning@@"
   },
-  "p5_pull_fit": {
-   "_note": "P5: the quadrant, as amended by V6 on 2026-09-08. No score and no overall verdict (rule doc 2.4).",
-   "name_id": "@@UNRULED: kompat_p5_pull_fit_name@@",
-   "name_en": null,
-   "label_meaning": "@@UNRULED: kompat_p5_pull_fit_meaning@@",
-   "gift_seed": "@@UNRULED: kompat_p5_pull_fit_gift@@",
-   "cost_seed": "@@UNRULED: kompat_p5_pull_fit_cost@@",
-   "actionable_seed": "@@UNRULED: kompat_p5_pull_fit_actionable@@"
+  "p4_matching": {
+   "_note": "temperament.pattern === matching. Katon's framework, never presented as classical, and it ranks nothing (rule 25).",
+   "name_id": "@@UNRULED: kompat_p4_matching_name@@",
+   "name_en": "@@UNRULED: kompat_p4_matching_name_en@@",
+   "label_meaning": "@@UNRULED: kompat_p4_matching_meaning@@"
   },
-  "pattern": {
-   "_note": "P4 badge names - three of the seven strings NEXT.md has listed as owed to Reyner since 2026-09-07. They live in the glossary rather than a copy bank because the renderer AND the floor both read them from here. Katon's framework; never presented as classical.",
-   "matching": {
-    "name_id": "@@UNRULED: p4_matching@@",
-    "name_en": null
-   },
-   "related": {
-    "name_id": "@@UNRULED: p4_related@@",
-    "name_en": null
-   },
-   "contrasting": {
-    "name_id": "@@UNRULED: p4_contrasting@@",
-    "name_en": null
-   }
+  "p4_related": {
+   "_note": "pattern === related.",
+   "name_id": "@@UNRULED: kompat_p4_related_name@@",
+   "name_en": "@@UNRULED: kompat_p4_related_name_en@@",
+   "label_meaning": "@@UNRULED: kompat_p4_related_meaning@@"
   },
-  "quadrant": {
-   "_note": "P5 quadrant labels - the other four owed strings. No score is ever shown beside these (rule doc 2.4).",
-   "q1": {
-    "name_id": "@@UNRULED: p5_q1@@",
-    "name_en": null
-   },
-   "q2": {
-    "name_id": "@@UNRULED: p5_q2@@",
-    "name_en": null
-   },
-   "q3": {
-    "name_id": "@@UNRULED: p5_q3@@",
-    "name_en": null
-   },
-   "q4": {
-    "name_id": "@@UNRULED: p5_q4@@",
-    "name_en": null
-   }
+  "p4_contrasting": {
+   "_note": "pattern === contrasting.",
+   "name_id": "@@UNRULED: kompat_p4_contrasting_name@@",
+   "name_en": "@@UNRULED: kompat_p4_contrasting_name_en@@",
+   "label_meaning": "@@UNRULED: kompat_p4_contrasting_meaning@@"
   },
-  "reframe": {
-   "_note": "THE P2 REFRAME, and it is the one cell that is not optional. The compat spec's ethical spine: a clash is NEVER a verdict, and every output is a MAP for navigating the relationship rather than a judgment on it. When the day pair carries 冲, 害 or 刑 the semantic JSON raises p2_reframe_required and the p2_day_pair block must cover this string. Rule 25 applies to BOTH people: no advice to leave or to stay.",
-   "label_meaning": "@@UNRULED: kompat_reframe@@"
+  "p5_q1": {
+   "_note": "pullFit.quadrant === q1. No score is ever shown beside these (rule doc 2.4).",
+   "name_id": "@@UNRULED: kompat_p5_q1_name@@",
+   "label_meaning": "@@UNRULED: kompat_p5_q1_meaning@@"
+  },
+  "p5_q2": {
+   "_note": "quadrant === q2.",
+   "name_id": "@@UNRULED: kompat_p5_q2_name@@",
+   "label_meaning": "@@UNRULED: kompat_p5_q2_meaning@@"
+  },
+  "p5_q3": {
+   "_note": "quadrant === q3.",
+   "name_id": "@@UNRULED: kompat_p5_q3_name@@",
+   "label_meaning": "@@UNRULED: kompat_p5_q3_meaning@@"
+  },
+  "p5_q4": {
+   "_note": "quadrant === q4.",
+   "name_id": "@@UNRULED: kompat_p5_q4_name@@",
+   "label_meaning": "@@UNRULED: kompat_p5_q4_meaning@@"
+  },
+  "p7_strengths_lead": {
+   "_note": "Leads the two or three strengths.",
+   "label_meaning": "@@UNRULED: kompat_p7_strengths_lead_meaning@@"
+  },
+  "p7_frictions_lead": {
+   "_note": "Leads the two or three frictions.",
+   "label_meaning": "@@UNRULED: kompat_p7_frictions_lead_meaning@@"
+  },
+  "p7_asks_lead": {
+   "_note": "Leads the one sentence on what the pairing asks of each.",
+   "label_meaning": "@@UNRULED: kompat_p7_asks_lead_meaning@@"
   }
  }
 }

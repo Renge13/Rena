@@ -19,8 +19,12 @@ import { calculateBaziChart } from '../lib/bazi/buildChart.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
 import { buildPairSemantic } from '../lib/semantic/pair.js';
 import { GLOSSARY } from '../lib/semantic/glossary.js';
+import { assembleFallback } from '../lib/render/fallback.js';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
 import { VALIDATION_CHARTS, HOUR_UNKNOWN_CHARTS } from './bazi-validation.fixture.js';
 
+const ROOT = path.resolve(import.meta.dirname, '..');
 const ALL = [...VALIDATION_CHARTS, ...HOUR_UNKNOWN_CHARTS];
 const chart = (id) => {
   const tc = ALL.find((c) => c.id === id);
@@ -155,43 +159,133 @@ test('NO BIRTH DATA REACHES THE SEMANTIC JSON, for either person', () => {
   }
 });
 
-test('every glossary cell it reads is an UNRULED placeholder, and none is missing', () => {
-  // Two failures in one assertion, deliberately: a MISSING key would make
-  // `contentFrom` return nulls and the fact would silently carry no content, and
-  // a RULED-LOOKING string here would mean Code or Cowork had authored Indonesian.
-  const p = pair(1, 12);   // the pair with the most facts
-  for (const f of p.facts) {
-    assert.ok(
-      GLOSSARY.kompatibilitas[f.id],
-      `${f.id} has a glossary cell - a missing one yields a silently empty fact`,
-    );
-    assert.ok(f.label_meaning?.includes('@@UNRULED'), `${f.id}'s content is a placeholder`);
-    assert.equal(f.glossary_gap, undefined, `${f.id} is not a glossary GAP - the cell exists`);
+test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', () => {
+  // CORRECTED 2026-09-08. The first shape gave each FACT one cell, which cannot
+  // work: `assembleFallback` picks the floor's text straight out of the cell, so
+  // one cell per fact means a clashed seat and a harmonised seat read
+  // identically. The floor picks text by RELATION.
+  //
+  // The authority on the shape is docs/content/compat-glossary-rulings.md, and
+  // this test PARSES IT rather than restating its key list - a second copy of
+  // the shape is the thing that would drift.
+  const md = readFileSync(path.join(ROOT, 'docs', 'content', 'compat-glossary-rulings.md'), 'utf8');
+  const ruled = {};
+  let heading = null;
+  for (const line of md.split(/\r?\n/u)) {
+    if (line.startsWith('## ')) {
+      heading = line.slice(3).trim().replace('kompatibilitas.', '');
+      ruled[heading] = [];
+      continue;
+    }
+    if (!heading) continue;
+    const m = /^-\s+([a-z_]+):\s+"(.*)"\s*$/u.exec(line);
+    if (m) ruled[heading].push(m[1]);
   }
 
-  // The seven owed labels, and the reframe.
-  for (const k of ['matching', 'related', 'contrasting']) {
-    assert.ok(GLOSSARY.kompatibilitas.pattern[k].name_id.includes('@@UNRULED'));
+  assert.equal(Object.keys(ruled).length, 24, 'the rulings file has 24 cells');
+
+  const cells = Object.keys(GLOSSARY.kompatibilitas).filter((k) => !k.startsWith('_'));
+  assert.deepEqual(cells.slice().sort(), Object.keys(ruled).sort(),
+    'the glossary key set IS the rulings file\'s');
+
+  // Field for field, and 46 in total. The applier refuses on a count mismatch, so
+  // a shape that drifts from 46 here fails there too - this says so earlier and
+  // with the offending cell named.
+  let total = 0;
+  for (const [key, fields] of Object.entries(ruled)) {
+    const have = Object.keys(GLOSSARY.kompatibilitas[key]).filter((k) => !k.startsWith('_'));
+    assert.deepEqual(have.slice().sort(), fields.slice().sort(), `${key} has exactly the ruled fields`);
+    total += have.length;
   }
-  for (const k of ['q1', 'q2', 'q3', 'q4']) {
-    assert.ok(GLOSSARY.kompatibilitas.quadrant[k].name_id.includes('@@UNRULED'));
+  assert.equal(total, 46, '46 assignments, which is what --expect 46 checks');
+
+  // NO SEEDS. Nothing was ruled for gift/cost/actionable, and a placeholder for a
+  // string nobody has ruled is an invitation to invent one.
+  // METADATA KEYS STRIPPED, same rule scanUnruled uses. The section's own
+  // _README NAMES the three dropped fields in explaining that they are dropped,
+  // so a raw scan matches the documentation rather than the data - the third time
+  // this exact shape has appeared in two days.
+  const raw = JSON.stringify(GLOSSARY.kompatibilitas, (k, v) => (k.startsWith('_') ? undefined : v));
+  for (const dropped of ['gift_seed', 'cost_seed', 'actionable_seed']) {
+    assert.ok(!raw.includes(dropped), `no ${dropped} anywhere in the section`);
   }
-  assert.ok(GLOSSARY.kompatibilitas.reframe.label_meaning.includes('@@UNRULED'));
+  // And the two folded sub-objects are gone: the badge IS name_id.
+  assert.equal('pattern' in GLOSSARY.kompatibilitas, false, 'pattern.* folded into p4_*');
+  assert.equal('quadrant' in GLOSSARY.kompatibilitas, false, 'quadrant.* folded into p5_q*');
 });
 
-test('the badge and quadrant NAMES come from the glossary, never from the engine', () => {
-  // Ruling P4: "the content layer can render the badge". The engine emits the id
-  // and looks the name up; it never composes one. Asserted by checking the fact
-  // carries the glossary's exact string.
-  const p = pair(1, 2);
-  const t = p.facts.find((f) => f.id === 'p4_temperament');
-  assert.equal(
-    t.provenance.pattern_name_id,
-    GLOSSARY.kompatibilitas.pattern[t.provenance.pattern].name_id,
-  );
-  const q = p.facts.find((f) => f.id === 'p5_pull_fit');
-  assert.equal(
-    q.provenance.quadrant_name_id,
-    GLOSSARY.kompatibilitas.quadrant[q.provenance.quadrant].name_id,
-  );
+test('every fact resolves a REAL cell, and each is still a placeholder', () => {
+  // A missing key would surface as a silently empty floor block, so pair.js
+  // throws on one. This exercises the mapping across pairs that reach different
+  // variants rather than trusting the table by reading it.
+  for (const [x, y] of [[1, 2], [1, 12], [2, 6], [3, 7], [1, 3], [1, 101]]) {
+    const pj = pair(x, y);
+    for (const f of pj.facts) {
+      if (f.id === 'p0_names') {
+        // No cell BY DESIGN: both names come from `arketipe`, already ruled.
+        assert.ok(f.archetype?.name_id, 'p0_names carries A\'s archetype');
+        assert.ok(f.archetype_b?.name_id, 'and B\'s');
+        continue;
+      }
+      assert.ok(f.label_meaning?.includes('@@UNRULED'), `${x}x${y} ${f.id} resolved a placeholder cell`);
+    }
+  }
+});
+
+test('THE VARIANT IS THE RELATION, so two seats do not read alike', () => {
+  // The correction, asserted. Under the old shape both of these resolved the one
+  // `p2_day_pair` cell and would have produced the same sentence.
+  const clash = pair(2, 6).facts.find((f) => f.id === 'p2_day_pair');
+  const none = pair(3, 7).facts.find((f) => f.id === 'p2_day_pair');
+  assert.equal(clash.provenance.variant, 'p2_clash');
+  assert.equal(none.provenance.variant, 'p2_none');
+  assert.notEqual(clash.label_meaning, none.label_meaning);
+
+  // A punishment outranks a harmony on the same pair: the cell named is the one
+  // the reframe is about.
+  assert.equal(pair(1, 12).facts.find((f) => f.id === 'p2_day_pair').provenance.variant, 'p2_punishment');
+
+  // P1 is direction-neutral by ruling: both directions of produces share a cell.
+  const cycles = new Set();
+  for (const [x, y] of [[1, 2], [2, 1], [1, 12], [12, 1]]) {
+    cycles.add(pair(x, y).facts.find((f) => f.id === 'p1_stem_relation').provenance.variant);
+  }
+  for (const v of cycles) assert.match(v, /^p1_(same|produces|controls|combination)$/u);
+});
+
+test('THE REFRAME IS ITS OWN REQUIRED FACT, so the FLOOR carries it too', () => {
+  // A safety_flag tells the RENDERER a reframe is needed; it puts no ruled words
+  // anywhere the floor can reach. As a fact it becomes a required point with its
+  // own block, so the spec's ethical spine is not something only the LLM honours.
+  const hard = pair(1, 12);
+  assert.ok(hard.safety_flags.includes('p2_reframe_required'));
+  const reframe = hard.facts.find((f) => f.id === 'p2_reframe');
+  assert.ok(reframe, 'the reframe is a fact');
+  assert.equal(reframe.hierarchy.role, 'spine');
+  assert.ok(hard.required_points.some((r) => r.fact_id === 'p2_reframe'));
+
+  // And absent when the seat is fine.
+  assert.equal(pair(3, 7).facts.some((f) => f.id === 'p2_reframe'), false);
+});
+
+test('THE FLOOR TOLERATES A CELL WITH ONLY label_meaning', () => {
+  // Five of the 24 cells carry label_meaning alone - the reframe, the palace
+  // frame and the three P7 leads. `blockFor` iterates
+  // ['label_meaning','gift','cost','actionable'] and skips falsy fields, so this
+  // already holds; it is asserted because nothing else in the repo exercises a
+  // cell with no name and no seeds, and a future edit to that loop would break
+  // the floor's reframe silently.
+  const hard = pair(1, 12);
+  const floor = assembleFallback(hard);
+  const ids = floor.blocks.flatMap((b) => b.fact_ids ?? []);
+  assert.ok(ids.includes('p2_reframe'), 'the text-only reframe produced a block');
+
+  const block = floor.blocks.find((b) => (b.fact_ids ?? []).includes('p2_reframe'));
+  assert.ok(block.text.trim().length > 0, 'and the block has text, not an empty string');
+
+  // No block anywhere is empty. An empty one is what a tolerated-but-unhandled
+  // cell would produce, and it would read as a heading with nothing under it.
+  for (const b of floor.blocks) {
+    assert.ok(b.text.trim().length > 0, `block ${(b.fact_ids ?? []).join(',')} is not empty`);
+  }
 });

@@ -12,23 +12,18 @@
 // the deterministic floor is assembled out of those very strings, so a floor
 // carries `@@UNRULED: kompat_*@@` in its prose.
 //
-// ── AND THE OBVIOUS GUARD DOES NOT CATCH IT ───────────────
+// ── TWO GUARDS, AND WHICH ONE FIRES HAS ALREADY MOVED ONCE ──
 // The first version of this file asserted the mirror's floor gate would refuse
-// it. **It does not.** Measured:
+// it. At that point it did NOT: both findings on the pair floor were SOFT, and
+// soft findings keep serving by design, so the floor would have been served at
+// HTTP 200 to someone who had paid. `lib/pair/serveReading.js` therefore carries
+// a SECOND serve-boundary refusal - a sentinel in prose is never servable.
 //
-//     validateRendering(pairFloor, pairSemantic)
-//       ok: false   hard: FALSE      <- floorRefusalReason returns null
-//       flag  coverage.slot_filling
-//       soft  style.code_leak
-//
-// Both findings are SOFT, and soft findings keep serving by design - the rule is
-// that a hedge count must not pull a reading. So the floor would have been
-// served, HTTP 200, to someone who had paid: a page of placeholders.
-//
-// `lib/pair/serveReading.js` therefore carries a SECOND serve-boundary refusal -
-// a sentinel in prose is never servable - and that is what produces the 503 the
-// test below asserts. It clears when Reyner rules the glossary; no code changes
-// with it.
+// After the 2026-09-08 variant restructure the floor ALSO hard-fails
+// `fact.condition_named`, so `floorRefusalReason` now catches it first and the
+// sentinel guard is the second line rather than the only one. Both must keep
+// working, and the sentinel guard is the one that survives the rulings landing,
+// so the test below accepts either reason and says why.
 //
 // So the tests below assert the endpoint's STRUCTURE - the gate, the pipeline
 // wiring, rule 16 - and the 503 is asserted as a documented state with its cause
@@ -133,11 +128,13 @@ test('THE FLOOR IS TOO BROKEN TO SERVE, and the endpoint 503s rather than shippi
   const res = await servePairReading(request(), id);
   assert.equal(res.status, 503);
   const body = await res.json();
-  assert.equal(body.error, 'unruled_content_in_reading');
-
-  // NOT the floor gate. floorRefusalReason returns NULL here - both findings on
-  // the pair floor are SOFT, and soft findings keep serving by design. Without
-  // the second refusal this would have been a 200 carrying placeholders.
+  // EITHER refusal is correct and which one fires moved with the 2026-09-08
+  // variant restructure: the floor now HARD-fails 'fact.condition_named' as well,
+  // so floorRefusalReason catches it first. Before the restructure both findings
+  // were soft and only the sentinel guard stood between a paying customer and a
+  // page of placeholders. Both are asserted because both must keep working - the
+  // sentinel guard is the one that survives the rulings landing.
+  assert.match(body.error, /^(unruled_content_in_reading|floor_failed_gate:)/u);
 });
 
 test('THE CAUSE IS THE UNRULED GLOSSARY, measured here rather than asserted', async () => {

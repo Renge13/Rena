@@ -225,7 +225,47 @@ finds it changed has found a defect rather than the ruling. The floor rate is st
 budget - rule 15 leaves one provider, so an outage is a 100% floor. It simply no longer decides ship
 or no-ship.
 
-## THE CURRENT WORK, 2026-09-07 - PROMPT X-b1, COMPAT TRANCHE 2b1, `feat/compat-2b1`
+## THE CURRENT WORK, 2026-09-08 - PROMPT X-b2, THE PROSE PIPELINE, `feat/compat-2b2`
+
+**`docs/prompts/X-compat-2b2.md`, RELEASED 2026-09-08 by Reyner. Six commits; FOUR landed.**
+The compat report enters the SAME pipeline the mirror uses, as a second instance of one contract.
+
+| | |
+|---|---|
+| 0 | `722f5fe` the prompt file alone |
+| 1 | `363f091` `lib/semantic/pair.js` + the `kompatibilitas` glossary section (placeholders only) |
+| 2 | `e4d4b08` the compat renderer prompt, selected by `kind` |
+| 3 | **BLOCKED - no `GEMINI_API_KEY`** |
+| 4 | `GET /api/pair/[id]/reading` |
+| 5 | waits for Reyner's glossary rulings |
+
+**COMMIT 3 IS BLOCKED AND WAS NOT STUBBED.** Its three Stage 6 checks - `both_named`,
+`no_verdict`, `reframe_present` - may not be cited as protection until each has been shown red
+on a REAL Gemini render, which is prompt X-b2's own condition and PR A's lesson. No key is
+available locally (`.env.example` only, no `.env.local`, no Vercel CLI), so the commit did not
+land at all rather than landing unverified.
+
+**THE CONSEQUENCE, PLAINLY: nothing currently enforces that both people are named in the opening,
+or that the P2 reframe appears when the flag is raised.** Both are ruled requirements. There is no
+UI for the endpoint, which is what makes that tolerable rather than a live defect.
+
+**TWO THINGS BLOCK A PRODUCTION DEPLOY AND BOTH ARE INTENDED:**
+1. `check-unruled-copy.mjs` now scans `GLOSSARY.kompatibilitas` and refuses while its 58
+   placeholders survive. `VERCEL_ENV=production npm run build` exits 1.
+2. A paid pair reading answers **503 `unruled_content_in_reading`**, because the floor is built
+   from those placeholders. **The mirror's floor gate does NOT catch this** - both findings on a
+   pair floor are SOFT - so `serveReading.js` carries a second serve-boundary refusal. Without it
+   a paying customer would have received a page of `@@UNRULED@@` at HTTP 200.
+
+Both clear when the glossary is ruled. Neither needs a code change.
+
+### PROMPT X-b1 IS MERGED, 2026-09-08, and is not current work any more
+
+**Merged as #97 (`90d301b`).** Migration `0010_pair.sql` is applied; production serves
+`GET /api/pair/<nonexistent>` as `404 {"error":"not_found"}`, which is the handler's own body and
+therefore proof the table exists.
+
+## SUPERSEDED - THE CURRENT WORK, 2026-09-07 - PROMPT X-b1, COMPAT TRANCHE 2b1, `feat/compat-2b1`
 
 **`docs/prompts/X-compat-2b1.md`, RELEASED 2026-09-07 (night) by Reyner. Five ordered commits.**
 The standalone paid product's spine: a `pair` object, checkout, the paid flip, and a gated facts

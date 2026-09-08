@@ -35,30 +35,36 @@
 // against itself. **The selftest has been shown failing on purpose** - see the
 // QA doc this generates.
 //
-// ── --variants: WHAT SIX RULE SETS WOULD DO TO THE SAME PAIRS ──
-// `--variants` prints the quadrant distribution under six rule sets on the SAME
+// ── --variants: WHAT SEVEN RULE SETS WOULD DO TO THE SAME PAIRS ──
+// `--variants` prints the quadrant distribution under seven rule sets on the SAME
 // seed and the SAME sample, so the columns are comparable pair for pair rather
 // than across two draws.
 //
 // **NOTHING IN lib/ CHANGES AND NO RULE MOVES.** V0 is computed by the SHIPPED
-// `compatPullFit`; V1-V5 are computed here, locally, from the same three fact
+// `compatPullFit`; V1-V6 are computed here, locally, from the same three fact
 // objects. They are hypotheticals for Reyner to rule on or discard.
 //
 // THE GUARD THAT MAKES THE DELTAS MEAN ANYTHING: the local variant engine also
 // computes V0, and every pair asserts that its local V0 equals the shipped
 // module's output exactly. If the local machinery has drifted from the rule, the
-// V0 column disagrees with the module and the run throws - so V1-V5 cannot be
+// V0 column disagrees with the module and the run throws - so V1-V6 cannot be
 // read as deltas off a V0 that was never the real rule.
 //
 // PLUS THE MONOTONICITY THE VARIANTS MUST OBEY, asserted per pair, not in
-// aggregate. Dropping or narrowing a pull clause can only remove pull; extending
-// 2.2.c or tightening 2.2.a can only remove fit. So:
+// aggregate. Narrowing or dropping a pull clause can only remove pull; extending
+// 2.2.c or tightening 2.2.a can only remove fit, and DELETING a fit conjunct can
+// only add it. So:
 //   V1.pull => V2.pull => V0.pull      (V1 clauses subset V2 subset V0)
 //   V3.fit  => V0.fit                  (2.2.c extended)
 //   V4.fit  => V3.fit, V5.fit => V3.fit (2.2.a tightened)
 //   V1/V3/V4/V5 pull are IDENTICAL     (same pull rule)
+//   V6.pull === V2.pull                 (same pull rule, so identical not ordered)
+//   V3.fit  => V6.fit                   (V6 DROPS 2.2.a, so its fit is a superset)
 // A variant implemented backwards fails these rather than printing a plausible
-// column.
+// column. Both V6 relations were driven red on purpose - giving V6 the
+// unrestricted 2.1.d trips the first on pair 2, and re-adding 2.2.a trips the
+// second on pair 1208, which is one of only about four pairs in 5000 where that
+// conjunct makes any difference at all.
 // ============================================================
 
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
@@ -182,6 +188,12 @@ const VARIANTS = {
   V3: { note: 'V1 + palace harm/punishment lower fit', pull: [pull_a, pull_b, pull_c], fit: [fit_a_either, fit_b, fit_c_day_palace] },
   V4: { note: 'V3 + 2.2.a = rank-0 supplier, either direction', pull: [pull_a, pull_b, pull_c], fit: [fit_a_rank0, fit_b, fit_c_day_palace] },
   V5: { note: 'V3 + 2.2.a = supply in BOTH directions', pull: [pull_a, pull_b, pull_c], fit: [fit_a_both, fit_b, fit_c_day_palace] },
+  // V6 is the combination the first six did NOT measure, added 2026-09-08 on
+  // Reyner's instruction: V2's PULL (2.1.d narrowed to the other person's month
+  // branch) with V3's FIT (palace 害/刑 lower fit), and 2.2.a DELETED rather than
+  // tightened - run 2 having shown that both proposed tightenings are as inert as
+  // the ruled form. Note the fit list has TWO clauses, not three.
+  V6: { note: "V2's pull + V3's fit, 2.2.a deleted", pull: [pull_a, pull_b, pull_c, pull_d_month], fit: [fit_b, fit_c_day_palace] },
 };
 const VARIANT_IDS = Object.keys(VARIANTS);
 
@@ -371,6 +383,16 @@ function assertVariantMonotonicity(v, n) {
   for (const id of ['V4', 'V5']) {
     if (high(v[id].fit) && !high(v.V3.fit)) fail(`${id} fit high but V3 fit low`);
   }
+
+  // V6 shares V2's pull clause list exactly, so their pull verdicts must be
+  // IDENTICAL - not merely ordered. A one-sided implication would pass a V6 that
+  // had quietly kept the unrestricted 2.1.d.
+  if (v.V6.pull !== v.V2.pull) fail(`V6 pull ${v.V6.pull} != V2 pull ${v.V2.pull}`);
+
+  // V6's fit is V3's with 2.2.a DELETED, so V6's conjunction is a SUBSET of V3's:
+  // dropping a conjunct can only ADD fit. V3.fit high must therefore imply
+  // V6.fit high - the opposite direction from V4 and V5 above, which tighten it.
+  if (high(v.V3.fit) && !high(v.V6.fit)) fail('V3 fit high but V6 fit low');
 }
 
 /** Same arithmetic as assertInvariants, per variant. */
@@ -422,7 +444,8 @@ function reportVariants({ variant, standalone, soleClause }, { charts, pairs, se
   const lines = [];
   lines.push(`charts=${charts} pairs=${pairs} seed=${seed}`);
   lines.push('');
-  lines.push('SIX RULE SETS, SAME SEED AND SAME 5000 PAIRS');
+  // Self-counting, so adding a variant cannot leave the heading saying "six".
+  lines.push(`${VARIANT_IDS.length} RULE SETS, SAME SEED AND SAME ${pairs} PAIRS`);
   lines.push('');
   lines.push('        q1              q2              q3              q4          pull hi   fit hi   rule');
   for (const id of VARIANT_IDS) {

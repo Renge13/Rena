@@ -296,3 +296,126 @@ clause space, not Katon's traffic, which does not exist for compat yet. A varian
 balanced here could still land badly on real submissions. What the table is good for is exactly what
 it shows: which clauses are inert, which one carries all the weight, and how far each dial actually
 moves the distribution.
+
+---
+
+# RUN 2b, 2026-09-08 — V6, the combination run 2 named and did not measure
+
+**STILL MEASUREMENT ONLY. NOTHING IN `lib/` CHANGED AND NO RULE MOVED.** V6 is computed inside the
+script from the same fact objects as the rest, on the same seed and the same 5000 pairs.
+
+Run 2's finding 4 ended: *"The distribution nobody has ruled on is the one where all four quadrants
+carry real weight, and V3 plus a narrowed 2.1.d (V2's dial rather than V1's deletion) is the
+combination not measured here. It was not measured because it was not asked for, and adding it is a
+one-line variant."* This is that variant, plus the other half of run 2's finding 1 — **2.2.a
+deleted rather than tightened**, since both proposed tightenings measured as inert.
+
+## THE COMMAND
+
+```
+$ node scripts/compat-base-rates.mjs --charts 2000 --pairs 5000 --variants
+```
+
+**Same seed `20260907`, same 2000 charts, same 5000 ordered pairs as runs 1 and 2.** The V6 code
+consumes no randomness, so run 1's table still reproduces byte-identically from this version of the
+script and run 2's V0-V5 rows are unchanged to the digit — checked with `diff`, both clean. The
+variant run is itself reproducible.
+
+**V6 = V2's pull + V3's fit, with 2.2.a deleted:**
+
+| | |
+|---|---|
+| pull | 2.1.a, 2.1.b, 2.1.c, **2.1.d restricted to the other person's MONTH branch** |
+| fit | **2.2.b** and **2.2.c extended to palace 害/刑** — and that is all: 2.2.a is gone, so fit is a conjunction of TWO clauses, not three |
+
+## THE TABLE
+
+```
+charts=2000 pairs=5000 seed=20260907
+
+7 RULE SETS, SAME SEED AND SAME 5000 PAIRS
+
+        q1              q2              q3              q4          pull hi   fit hi   rule
+  V0   3315  66.3%     428   8.6%    1088  21.8%     169   3.4%    74.9%    88.1%   current rule
+  V1   1136  22.7%     101   2.0%    3267  65.3%     496   9.9%    24.7%    88.1%   drop 2.1.d
+  V2   2117  42.3%     241   4.8%    2286  45.7%     356   7.1%    47.2%    88.1%   2.1.d = month branch only
+  V3    555  11.1%     682  13.6%    1566  31.3%    2197  43.9%    24.7%    42.4%   V1 + palace harm/punishment lower fit
+  V4    555  11.1%     682  13.6%    1565  31.3%    2198  44.0%    24.7%    42.4%   V3 + 2.2.a = rank-0 supplier, either direction
+  V5    555  11.1%     682  13.6%    1562  31.2%    2201  44.0%    24.7%    42.3%   V3 + 2.2.a = supply in BOTH directions
+  V6   1074  21.5%    1284  25.7%    1047  20.9%    1595  31.9%    47.2%    42.4%   V2's pull + V3's fit, 2.2.a deleted
+```
+
+**THE V6 ROW:**
+
+| | q1 | q2 | q3 | q4 | pull high | fit high |
+|---|---|---|---|---|---|---|
+| **V6** | 1074 (**21.5%**) | 1284 (**25.7%**) | 1047 (**20.9%**) | 1595 (**31.9%**) | 47.2% | 42.4% |
+
+## WHAT THE ROW SAYS
+
+**1. It is the only rule set in which all four quadrants carry real weight.** The spread runs
+20.9% to 31.9% — no quadrant under a fifth of pairs, none over a third. Every other row has at least
+one quadrant that is either dominant or vestigial: V0 puts 66.3% in q1 and 3.4% in q4; V1 puts
+65.3% in q3 and 2.0% in q2; V3 puts 43.9% in q4 and 11.1% in q1. **If the four quadrants are each
+to get authored content that a real share of readers will see, V6 is the only measured shape where
+that investment pays off evenly.**
+
+**2. q2 stops being a rounding error.** The addictive-hard quadrant — the one run 1 flagged as
+carrying the most interesting content and reaching 8.6% of pairs under the current rule — reaches
+**25.7%** here, a threefold move. That is the single largest change in the row and it is the one
+most likely to matter to what gets written.
+
+**3. Deleting 2.2.a changed NOTHING, which is the confirmation run 2 predicted.** V6's fit-high is
+**42.4%**, identical to V3's 42.4% — V3 keeps the ruled 2.2.a and V6 has none at all. Across 5000
+pairs the clause's presence moves fit on **zero** of them at this resolution. Combined with run 2's
+finding that both proposed tightenings also land at 99.5% and 99.9%, the clause is inert in every
+form measured. **Deleting it is therefore free of consequence in this sample** — which is an
+argument that it costs nothing, not an argument that it should go. That remains Reyner's ruling.
+
+**4. V6's pull is V2's exactly, by construction and by measurement.** 47.2% in both rows, and the
+script asserts per pair that the two verdicts are IDENTICAL rather than merely ordered — so a V6
+that had quietly kept the unrestricted 2.1.d could not print this row.
+
+**WHAT THIS ROW IS NOT.** It is not a recommendation and no rule moved. It is also not evidence that
+V6 is *correct* — an even spread is a property of the distribution, not of the reading being true,
+and there is still **no oracle for a pair claim**. A rule set could distribute beautifully and
+describe nothing. What the row supports is narrower and worth stating plainly: of the seven measured
+shapes, V6 is the one where authoring four quadrants' worth of content is not mostly wasted.
+
+## THE GUARDS, AND BOTH NEW ONES WERE DRIVEN RED ON PURPOSE
+
+V6 adds two relations to the per-pair monotonicity check, and neither was trusted before it was
+shown failing:
+
+**A. `V6.pull === V2.pull`, identical rather than ordered.** They share a pull clause list, so a
+one-sided implication would let a V6 that kept the unrestricted 2.1.d slip through. Giving V6
+`pull_d` instead of `pull_d_month`:
+
+```
+Error: INVARIANT BREACH on pair 2: V6 pull high != V2 pull low
+```
+
+**B. `V3.fit => V6.fit`, the opposite direction from V4 and V5.** V6 DROPS a conjunct, so its fit is
+a SUPERSET of V3's — dropping a conjunct can only add fit, where tightening one can only remove it.
+Getting that direction backwards is the easy mistake. Re-adding 2.2.a to V6:
+
+```
+Error: INVARIANT BREACH on pair 1208: V3 fit high but V6 fit low
+```
+
+**Note where that one fired.** Pair 1208, not pair 2 — because re-adding 2.2.a differs on only about
+four pairs in 5000, so the guard had to run most of the sample before it found one. That is a useful
+thing to know about this guard's sensitivity: it catches a difference of a handful of pairs, but only
+because the sample is large. A 500-pair run would very likely have missed it.
+
+The four earlier guards are unchanged and still pass: the known-answer selftest (6/6), the arithmetic
+invariants (now per variant, across all seven), the local-V0-equals-the-shipped-module check, and
+the earlier monotonicity relations. The table heading is now self-counting (`7 RULE SETS`) so adding
+an eighth variant cannot leave it saying "six" — it said "SIX RULE SETS" as a literal until this run.
+
+## THE CAVEAT, UNCHANGED
+
+**These are rates over RANDOM pairs, not couples.** Real submissions are two people who already have
+a relationship, and there is no reason to assume that population matches a uniform draw over 45 years
+of birthdates. V6's even spread is a property of the clause space, not a prediction about Katon's
+traffic — which does not exist for compat yet.

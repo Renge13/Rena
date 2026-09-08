@@ -95,6 +95,15 @@
         "note": "THE load-bearing regex. renderer-prompt-notes: CONFIRMED UNFIXABLE BY PROMPT ALONE - run 5 emitted it twice against an explicit ban, and gate-check run 2 emitted it a third time, in the penutup. This regex is the only reliable fix. The 140-char window keeps it inside one sentence; the lazy quantifier stops it spanning a whole paragraph. THE `bukan berarti` CARVE-OUT (Reyner, 2026-08-06, ruling A on the rejection gallery): the gallery showed this check's most common trigger was 'Lemah di sini bukan berarti tidak mampu, melainkan sumber tenagamu ada di luar dirimu' - which is the resolve-in-the-same-breath move rule 21 REQUIRES, not the hedge the ban was written for. 'bukan berarti X' NEGATES A MISREADING, which is the job; 'bukan X tapi Y' substitutes one claim for another, which is the hedge. The lookahead separates them, so the ban keeps catching what it was built for."
       }
     ],
+    "_pair_scope": {
+      "_rule": "RULED BY REYNER 2026-09-08, on docs/qa/2026-09-08-compat-renders-n10.md. Read ONLY for semanticJson.kind === 'pair'; a mirror reading is scanned whole, exactly as before. tension_collapse bans harmony vocabulary because a MIRROR reading that dissolves one person's internal tension into a compliment has deleted the fact. A COMPAT reading states complementarity as a fact - p3_supplies is literally 'what each chart holds that the other needs' - and the ordinary Indonesian for it is the banned vocabulary. Measured: 16 of 18 rejections across n=10, 89%, and the renders put 'Saling Melengkapi' in the P3 block's own HEADING. So the ban is scoped by what the block is ABOUT, per block, not lifted.",
+      "_default": "A block matching neither list is scanned, as is the penutup and any block with no pair fact. The permitted list is an EXEMPTION; silence is not one.",
+      "_both": "A block carrying a tension key AND a complementarity key is scanned. Tension wins, because the failure this check exists for is a tension dissolved into harmony and that block contains one.",
+      "tension_collapse": {
+        "banned_in": ["p2_clash", "p2_harm", "p2_punishment", "p3_same_imbalance", "p1_controls", "p5_q2", "p5_q4"],
+        "permitted_in": ["p3_supplies", "p2_harmony", "p1_combination", "p5_q1", "p5_q3"]
+      }
+    },
     "tension_collapse": [
       {
         "pattern": "\\bmenyatu\\b",

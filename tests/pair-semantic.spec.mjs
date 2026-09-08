@@ -17,10 +17,11 @@ import { test } from 'node:test';
 
 import { calculateBaziChart } from '../lib/bazi/buildChart.js';
 import { buildSemanticJson } from '../lib/semantic/index.js';
-import { buildPairSemantic } from '../lib/semantic/pair.js';
+import { buildPairSemantic, variantKeysFor } from '../lib/semantic/pair.js';
 import { GLOSSARY } from '../lib/semantic/glossary.js';
 import { assembleFallback } from '../lib/render/fallback.js';
 import { validateRendering } from '../lib/validate/index.js';
+import BLOCKLIST from '../lib/validate/blocklist.json' with { type: 'json' };
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { VALIDATION_CHARTS, HOUR_UNKNOWN_CHARTS } from './bazi-validation.fixture.js';
@@ -270,6 +271,45 @@ test('every fact resolves a RULED cell', () => {
       assert.equal(f.glossary_gap, undefined, `${x}x${y} ${f.id} is not a gap`);
     }
   }
+});
+
+test('variantKeysFor NAMES THE CELL THE FACT ACTUALLY CARRIES', () => {
+  // ── THIS IS THE ANTI-DRIFT ASSERTION, and it is the whole reason the gate is
+  // allowed to derive variant keys instead of reading a field off the fact ──
+  // Stage 6 scopes tension_collapse by these keys (STAGE6_VERSION 1.19.0). The
+  // derivation lives beside the construction but is not the same code, which is
+  // the "a check holding its own copy of a ruled value IS the cause" shape. So:
+  // for every fact of every pair below, at least one derived key must name the
+  // GLOSSARY object the fact was actually built from.
+  //
+  // Compared on `label_meaning` rather than by identity, because a semantic JSON
+  // that has been through the cache is a parsed copy and `===` would pass here
+  // and fail in production - the exact class of bug this file exists to catch.
+  const K = GLOSSARY.kompatibilitas;
+  let checked = 0;
+  for (const [x, y] of [[1, 2], [1, 12], [2, 6], [3, 7], [1, 3], [1, 101], [13, 11], [12, 6]]) {
+    for (const f of pair(x, y).facts) {
+      const keys = variantKeysFor(f);
+      assert.ok(keys.length > 0, `${x}x${y} ${f.id} derives at least one key`);
+      for (const k of keys) assert.ok(K[k], `${x}x${y} ${f.id} -> "${k}" is a real cell`);
+      assert.ok(keys.some((k) => K[k].label_meaning === f.label_meaning),
+        `${x}x${y} ${f.id}: derived [${keys.join(', ')}] but the fact carries another cell`);
+      checked += 1;
+    }
+  }
+  assert.ok(checked >= 40, `exercised ${checked} facts`);
+});
+
+test('EVERY scoped key is a real cell, and the two lists do not overlap', () => {
+  // A typo in either list would silently make a block unclassified - scanned,
+  // which is the safe direction, and therefore invisible. This is the check that
+  // makes the silence audible.
+  const scope = BLOCKLIST.style._pair_scope.tension_collapse;
+  for (const k of [...scope.banned_in, ...scope.permitted_in]) {
+    assert.ok(GLOSSARY.kompatibilitas[k], `"${k}" is a kompatibilitas cell`);
+  }
+  const both = scope.banned_in.filter((k) => scope.permitted_in.includes(k));
+  assert.deepEqual(both, [], 'no key is both banned and permitted');
 });
 
 test('THE VARIANT IS THE RELATION, so two seats do not read alike', () => {

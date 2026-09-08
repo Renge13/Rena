@@ -29,7 +29,18 @@
 // shape, different verdict, so it is a different instrument.
 // ============================================================
 
-import { UPCOMING_COPY } from '../lib/site/copy.js';
+import { UPCOMING_COPY, COMPAT_COPY } from '../lib/site/copy.js';
+
+// ── EVERY BANK THAT CAN CARRY A SENTINEL, 2026-09-07 ──────
+// This scanned UPCOMING_COPY and nothing else, because that was the only bank
+// with stubbed values when it was written. `COMPAT_COPY` now has one too, and a
+// gate that cannot see the bank it is supposed to guard is not a gate - it is a
+// green check beside a live placeholder, which is this repo's most-repeated
+// failure shape.
+//
+// KEYED BY NAME so the report says WHICH bank, and a bank added without a row
+// here is the same hole again. When the next one appears, add it.
+const BANKS = { UPCOMING_COPY, COMPAT_COPY };
 
 /** The marker `lib/site/copy.js`'s PENDING() stamps into every unruled value. */
 export const SENTINEL = '@@UNRULED';
@@ -63,21 +74,22 @@ export function scanUnruled(node, path = 'UPCOMING_COPY', found = []) {
 const invoked = process.argv[1] && process.argv[1].endsWith('check-unruled-copy.mjs');
 if (invoked) {
   const strict = process.argv.includes('--strict') || process.env.VERCEL_ENV === 'production';
-  const pending = scanUnruled(UPCOMING_COPY);
+  const pending = Object.entries(BANKS)
+    .flatMap(([name, bank]) => scanUnruled(bank, name));
 
   if (pending.length === 0) {
-    console.log('OK No unruled copy. UPCOMING_COPY carries no placeholder.');
+    console.log(`OK No unruled copy in ${Object.keys(BANKS).length} bank(s): ${Object.keys(BANKS).join(', ')}.`);
     process.exit(0);
   }
 
   const how = strict ? 'REFUSING' : 'PENDING';
   console[strict ? 'error' : 'log'](
-    `${how}: ${pending.length} string(s) in UPCOMING_COPY are still unruled.\n`);
+    `${how}: ${pending.length} string(s) are still unruled.\n`);
   for (const p of pending) console[strict ? 'error' : 'log'](`  ${p.path}\n    "${p.value}"`);
 
   if (strict) {
     console.error('\nReyner is the sole authority on Indonesian register (CLAUDE.md rule 20).');
-    console.error('Replace every value in UPCOMING_COPY with his ruled wording, then rebuild.');
+    console.error('Replace every value listed above with his ruled wording, then rebuild.');
     console.error('This gate is production-only; preview and local builds are unaffected.');
     process.exit(1);
   }

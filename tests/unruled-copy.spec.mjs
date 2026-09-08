@@ -42,7 +42,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { UPCOMING_COPY, PENDING } from '../lib/site/copy.js';
+import { UPCOMING_COPY, COMPAT_COPY, PENDING } from '../lib/site/copy.js';
 import { scanUnruled, SENTINEL } from '../scripts/check-unruled-copy.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -107,6 +107,27 @@ test('every required slot exists and is a non-empty string', () => {
   }
 });
 
+test('COMPAT_COPY carries its one slot, and it is deliberately UNRULED', () => {
+  // The compat invoice description is the Xendit checkout line AND the buyer's
+  // bank statement line, so rule 20 makes it chrome and Reyner's alone. It ships
+  // as a sentinel ON PURPOSE and a production build refuses while it does - the
+  // conditional gate tests below assert that refusal against an independent
+  // count, so this test only has to pin that the slot exists and is stubbed.
+  assert.equal(typeof COMPAT_COPY.invoiceDesc, 'string');
+  assert.ok(
+    COMPAT_COPY.invoiceDesc.includes(SENTINEL),
+    'invoiceDesc must stay a sentinel until Reyner rules it; when he does, this '
+    + 'assertion is the one to invert, and the gate tests below will follow it',
+  );
+});
+
+test('no price is hardcoded into the compat copy bank either', () => {
+  // Same reason as UPCOMING_COPY's: a price typed into a copy bank is a second
+  // source of truth for what a thing costs, and lib/pricing.js is the first.
+  assert.ok(!/\d{2}[.,]?\d{3}/.test(JSON.stringify(COMPAT_COPY)),
+    'a price-shaped number is in COMPAT_COPY; resolve it from lib/pricing.js instead');
+});
+
 test('no price is hardcoded into the copy bank', () => {
   // Guards against 39.000 / 79.000 being typed in beside the words when the
   // wording is ruled. lib/pricing.js is the only source of a price.
@@ -136,7 +157,14 @@ test('the production gate is wired into prebuild', () => {
  * no code with the detector it is checking.
  */
 function pendingByRawSearch() {
-  return JSON.stringify(UPCOMING_COPY).split(SENTINEL).length - 1;
+  // EVERY BANK THE GATE SCANS, 2026-09-07. This serialised UPCOMING_COPY alone,
+  // and when COMPAT_COPY acquired a sentinel the oracle computed 0 while the gate
+  // found 1 - so the conditional below expected an allowed build and got a
+  // refused one. The failure was loud, which is the only reason it is a two-line
+  // fix rather than a hole: an oracle that under-counts on a DIFFERENT bank than
+  // the gate reads would otherwise assert "must be allowed" over a live
+  // placeholder. Still a raw substring search sharing no code with scanUnruled.
+  return JSON.stringify([UPCOMING_COPY, COMPAT_COPY]).split(SENTINEL).length - 1;
 }
 
 test('strict mode refuses exactly when placeholders remain', () => {

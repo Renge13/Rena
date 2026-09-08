@@ -89,7 +89,7 @@ wrong sentence was the one telling you not to trust it.
 | **The shareable. FREE** | **Card A as a downloadable PNG, 1080x1350 (4:5). CHANGED 2026-08-31 by prompt R:** it was `1080x1440 share capture`, a 63:88 object floating on a 3:4 mat, and that became false the moment the export collapsed. Card A now IS the export - full-bleed, fully opaque, SQUARE corners, no mat, no rim, no shadow - and its share and download paths return **ONE asset**, not two. The mat is gone, so there is no field to include and nothing to crop away | `lib/mirror/view.js` -> `buildCardData` minus `appendix` -> `components/cards/Card.js#CardA`, exported through `captureSpec` which returns the same descriptor for both kinds when a spec has no canvas | none, ungated |
 | **Complete Edition, Rp 19.000** | Card B at download resolution (907x1747, no shadow, alpha corners) **and** the Complete Edition PDF - cover, reading verbatim from `render_cache`, chart page with `hal. N` cross-references, appendix of every mechanic in her chart, colophon | `lib/deliver/handlers.js` -> `lib/pdf/build.js` (page-map fixed point, ship-blocking) + `lib/card/cardData.js` (full, with `appendix`) | **PAYWALL.** `row.paid === true`, flipped only in the verified Xendit webhook. Offered AFTER the reading, never in front of it |
 | Karier / Uang | **Nothing, and no capture either.** The "Segera" rows and `POST /api/reading/[id]/interest` are deleted with the domain concept - the domain is not a product (`CLAUDE.md` SUPERSEDED), and the pillars are the domains positionally | n/a | n/a. See THE DEFERRED REGISTER for the demand signal this costs |
-| Compatibility | **A NAME, A PRICE AND A TAP. Not purchasable, and nothing is delivered.** It appears in the upcoming block below the Artifact decision. Tapping it records interest and nothing else | `components/Funnel.jsx#Upcoming` -> `POST /api/mirror/[token]/event` -> `product_interest` | `compat` is priced (**49.000 list / 39.000 launch**, ruled 2026-08-29 - this row said 45.000/29.000 until now, which was the pre-ruling ladder) and **absent from `SELLABLE_SKUS`**, so `/api/pay` 400s. Verified by hand 2026-08-31 against the running dev server: `POST /api/pay/<token>` with `{"sku":"compat"}` -> `400 {"error":"sku must be one of: artifact"}` |
+| Compatibility | **A NAME, A PRICE AND A TAP. Not purchasable, and nothing is delivered.** It appears in the upcoming block below the Artifact decision. Tapping it records interest and nothing else | `components/Funnel.jsx#Upcoming` -> `POST /api/mirror/[token]/event` -> `product_interest` | `compat` is priced (**49.000 list / 39.000 launch**, ruled 2026-08-29 - this row said 45.000/29.000 until now, which was the pre-ruling ladder) and **absent from `SELLABLE_SKUS`**, so `/api/pay` 400s. Verified by hand 2026-08-31 against the running dev server: `POST /api/pay/<token>` with `{"sku":"compat"}` -> `400 {"error":"sku must be one of: artifact"}`. **The Upcoming tap is scheduled for deletion in X-b3 when the standalone entry point ships** (ruled 2026-09-07 night: compat is a first-class entry point, not a secondary Upcoming item). |
 | Annual (setahun ke depan) | **Same: a name, a price and a tap.** Nothing is built behind it | as above | `annual` is priced (99.000 list / 79.000 launch) and is absent from `SELLABLE_SKUS` |
 | **The upcoming block itself** | Both products shown together BELOW the Artifact offer and visually secondary to it - a text link, not a second Button - per the ruled order Mirror -> Artifact decision -> Compat / Annual interest. **EVERY READER-FACING STRING IN IT IS A VISIBLE `@@UNRULED: ...@@` PLACEHOLDER**, because Reyner rules Indonesian register and had not ruled this block; the structure shipped so commits 5 and 6 were not blocked behind a wording decision. The two PRICES are real and resolve from `lib/pricing.js` | `lib/site/copy.js#UPCOMING_COPY` -> `components/Funnel.jsx#Upcoming` | **A PRODUCTION BUILD IS REFUSED WHILE ANY PLACEHOLDER SURVIVES** (`scripts/check-unruled-copy.mjs`, wired as `prebuild`). Preview and local builds pass deliberately: the block has to be seen in order to be ruled |
 | **Card A / Card B** | **Both reach a user now.** A is the free shareable in the reading; B is half the paid delivery. `Card.js` says which is which in its own docblock - *"CARD B - the paid artifact"* - so the A/B split was never an open question, only an unread one | `lib/card/` + `components/cards/Card.js` | Card A ungated, Card B behind `row.paid === true` |
@@ -916,6 +916,65 @@ all, and the measured answer is 0 of 13 with identical importances. The row exis
 also said the move would be *"expected, NOT
 the re-coupling tripwire firing"*, which would have authorised dismissing a genuine alarm. **A
 prediction that tells a reader what to disregard must carry its grep.**
+
+## RULED 2026-09-07 (night) — compat product model: B gets nothing, compat is a front door, nothing is free
+
+Three rulings by Reyner, 2026-09-07 (night), released as `docs/prompts/X-compat-2b1.md`. Verbatim.
+Together they make Compatibility a standalone paid product rather than an upsell hanging off the
+mirror, and they SUPERSEDE the P0 free tease decided 2026-08-02.
+
+**1 — PERSON B GETS NOTHING.**
+
+> Compatibility is a single product that Person A purchases using two people's birth data. The
+> output is one Compatibility Reading about the relationship. Person B gets: no mirror, no
+> individual reading, no link, no notification, no account, no information sent to them. Her birth
+> data is used only as the second input to the compatibility calculation. Do not expose or create a
+> user-facing B mirror flow.
+
+**THIS IS A DATA-MODEL CONSTRAINT, NOT A UI PREFERENCE, AND THAT IS THE PART A LATER SESSION WILL
+MISS.** A `reading` row IS a reachable `/r/<token>` URL - the token is the bearer credential and
+`GET /api/mirror/[token]` serves it to anyone holding it. So creating a `reading` row for person B
+would create a reading of person B that someone can open, whether or not any UI ever links to it.
+The convenient implementation - build both charts by creating two readings and joining them - is
+the one thing this ruling forbids. The `pair` table therefore stores both birth inputs itself and
+both charts are computed IN MEMORY at serve time. `tests/pair-route.spec.mjs` asserts the `reading`
+count is unchanged across a pair create, so the shortcut cannot be reintroduced by a session that
+does not know why.
+
+**2 — COMPATIBILITY IS A FIRST-CLASS ENTRY POINT.**
+
+> The Katon front door should have two clear product paths: Mirror - understand yourself.
+> Compatibility - understand the dynamic between two people. A user who only wants Compatibility
+> should not have to generate or pay for a Mirror reading first. The Compat pre-payment flow must
+> not require an AI Mirror render. Give Compatibility its own route/entry point now. Do not create
+> it as a secondary 'Upcoming' item under Mirror.
+
+This reverses the funnel shape the compat spec assumed since 2026-08-02, which had the buyer
+arriving from her own mirror. `pair.a_reading_id` is therefore NULLABLE: she may arrive from a
+mirror, or straight off the front door with no reading at all. LIVE STATE's Compatibility row now
+records that the Upcoming tap is scheduled for deletion in X-b3.
+
+**3 — NO FREE COMPAT RESULT.**
+
+> No free P0 reading, no named relation tease, and no Gemini render before payment. The pre-payment
+> Compat flow should be deterministic/static and cheap. The AI compatibility report is generated
+> only after successful payment. This supersedes the previous P0 idea entirely.
+
+**WHAT WAS TRADED AWAY IS WORTH NAMING, because P0 was not a careless idea.** Its whole case was
+that the comparison card is compat's own acquisition engine - shareable before payment, "look how
+different we are". Ruling 3 gives that up in exchange for zero provider spend before payment and no
+free relational claim. If share-driven acquisition later matters more than render cost, that is a
+new ruling, not a revert. The struck text stays in the spec for exactly that reason.
+
+**THE ONLY PRE-PAYMENT COMPUTATION is the solar-term boundary check**, run for BOTH people, because
+a boundary birth changes the chart and a buyer must answer it before paying for a reading of the
+wrong chart. Note what this is NOT: it is not a chart, not an archetype, not a relation. It is a
+public calendar fact about a date (`/api/season-check` computes nothing about a person).
+
+**RULING C STANDS AND ITS LIMIT IS RECORDED.** Email-only identity at compat checkout, no passwords
+and no sessions. **Katon has no email sender** - so v1 stores the email and shows the report link on
+screen after payment, and the email is the recovery record rather than a delivery channel.
+Automated sending is X-b3's decision and Reyner's.
 
 ## RULED 2026-09-07 (evening) — P4 badge layer, P5 accepted, product principle
 
@@ -2270,8 +2329,12 @@ Rule 23 amended: brackets convention is reading-prose only; the sharecard never 
 
 **COMPAT FLOW — RECONCILED AND DECIDED** (review trail: `archive/compat-flow-REVIEW.md`; the spec
 body `product/compatibility-reading-spec.md` is corrected in place and is now buildable):
-- Funnel: enter B → **P0 tease FREE** (two faces + ONE named relational fact, zero explanation;
-  comparison card shareable pre-payment — it is compat's own acquisition engine) → paywall → P1-P8.
+- ~~Funnel: enter B → **P0 tease FREE** (two faces + ONE named relational fact, zero explanation;
+  comparison card shareable pre-payment — it is compat's own acquisition engine) → paywall → P1-P8.~~
+  **STRUCK 2026-09-07 (night)** by ruling 3: *"No free P0 reading, no named relation tease, and no
+  Gemini render before payment. [...] This supersedes the previous P0 idea entirely."* Payment comes
+  first and the pre-payment flow is deterministic and static. The row is struck rather than deleted
+  because it is the record of a decision being REVERSED by a later ruling, not forgotten.
 - **Account + email created at first compat checkout.** The mirror stays anonymous — no login wall
   (Joey's front-door login serves his lead-gen model, not ours). The account owns the chart address
   book that P8's loop accumulates. Per-account rate limits on top of rule 19.

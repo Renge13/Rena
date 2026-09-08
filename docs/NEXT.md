@@ -225,7 +225,43 @@ finds it changed has found a defect rather than the ruling. The floor rate is st
 budget - rule 15 leaves one provider, so an outage is a 100% floor. It simply no longer decides ship
 or no-ship.
 
-## THE CURRENT WORK, 2026-09-07 - PROMPT X-a, COMPAT TRANCHE 2a, `feat/compat-2a`
+## THE CURRENT WORK, 2026-09-07 - PROMPT X-b1, COMPAT TRANCHE 2b1, `feat/compat-2b1`
+
+**`docs/prompts/X-compat-2b1.md`, RELEASED 2026-09-07 (night) by Reyner. Five ordered commits.**
+The standalone paid product's spine: a `pair` object, checkout, the paid flip, and a gated facts
+endpoint. **Server-verifiable end to end with curl before any UI exists** - there is no page, no
+Funnel change and no Home change in it.
+
+**THE THREE RULINGS THAT SHAPE IT** are verbatim in the prompt and in `PROGRESS.md`'s
+`RULED 2026-09-07 (night)`: person B gets nothing, compat is a first-class entry point, and there
+is no free compat result. The first is a DATA-MODEL constraint - a `reading` row is a reachable
+`/r/<token>` URL, so **person B must never become one**, and the pair stores both birth inputs
+itself.
+
+| | |
+|---|---|
+| 0 | the prompt file alone |
+| 1 | the model lands in the docs, nothing else changes |
+| 2 | `supabase/migrations/0010_pair.sql`, `lib/pairStore.js`, `POST /api/pair` |
+| 3 | checkout and the paid flip - `compat` becomes sellable |
+| 4 | `GET /api/pair/[id]`, the gated facts endpoint X-b2 renders through |
+
+**MIGRATION `0010_pair.sql` IS APPLIED BY HAND BY REYNER IN THE SUPABASE SQL EDITOR, BEFORE THE
+CODE DEPLOYS.** Migrations here have no CLI tracking (CLAUDE.md, REPO CONVENTIONS), so nothing in
+the repo can report whether it has run. An owner-held row of exactly the shape this file's design
+notes warn about: it will not be closed by a commit.
+
+**TWO STRINGS SHIP AS `@@UNRULED@@` AND ONE OF THEM FAILS A PRODUCTION BUILD ON PURPOSE.**
+`compat_invoice_desc` is a statement line, so rule 20 makes it user-facing and Reyner's;
+`scripts/check-unruled-copy.mjs` runs as `prebuild` and refuses a production build while it is
+live. Preview and local builds pass deliberately - the string has to be seen to be ruled.
+
+### PROMPT X-a IS MERGED, 2026-09-07, and is not current work any more
+
+**Merged as #96 (`a25ccf5`).** Two base-rate runs followed on `main` (`526b947`, `ead53d4`) and
+they are measurement only - no rule moved. Their findings are the input to the V6 ruling owed below.
+
+
 
 **`docs/prompts/X-compat-2a.md`, RELEASED 2026-09-07 (evening) by Reyner. Four ordered commits on
 `feat/compat-2a`.** P4 temperament facts and P5 pull/fit facts, under the evening rulings: P4 gets
@@ -306,6 +342,12 @@ meant to be; merging it did not change that.
 | Second-person input, P0 comparison card, email checkout, relational renderer prompt + Stage 6 | Claude Code, **prompt X-b, not written** |
 | **SEVEN INDONESIAN STRINGS, unruled 2026-09-07.** Three P4 badge names (`p4_matching`, `p4_related`, `p4_contrasting`) and four P5 quadrant labels (`p5_q1`..`p5_q4`). They live as `@@UNRULED@@` slots in `docs/product/compat-p4-p5-rules.md`; **nothing in `lib/compat/` carries a placeholder**, because the engine emits ids and the content layer holds the words. `scripts/check-unruled-copy.mjs` refuses a production build while any placeholder is live in `lib/site/copy.js` - these are NOT there yet and will not be caught by it until X-b puts them on a surface | **Reyner** |
 | **SPOUSE-STAR SOURCES.** Ruled a high-value v1 candidate 2026-09-07 and still unsourced. Two authorities needed, the same bar as 天干五合. Joey Yap HYDB was checked 2026-09-07 and does NOT state it, so this needs two sources FOUND, not one confirmation added | Cowork |
+| **THE P5 V6 RULING.** The two base-rate runs (`docs/qa/2026-09-07-compat-base-rates.md`) put six rule sets on one sample and refuted the first run's own suggested fix: tightening 2.2.a does not rescue it. **This is a product decision on what the four quadrants should mean, and it is its own PR** - amend `docs/product/compat-p4-p5-rules.md`, change `pullFit.js` red-first, then re-run `compat-base-rates.mjs` once as verification and append it as run 3. **No rule change rode in X-b1** | **Reyner** |
+| **THE EMAIL SENDER.** Ruling C stores an email at compat checkout and **Katon has no sender**. v1 shows the report link on screen after payment and the email is the recovery record. Whether anything is ever sent, and by what, is X-b3's decision | **Reyner** |
+| **`compat_invoice_desc`.** The Xendit statement line for compat. Rule 20 makes a statement line chrome, so it is Reyner's. It is live as `@@UNRULED@@` and a production build REFUSES while it is | **Reyner** |
+| **X-b2 (prose) and X-b3 (surface)**, outlined at the end of `X-compat-2b1.md`. **X-b2 is unblocked by this prompt** - `GET /api/pair/[id]` is the seam it hangs the renderer off | Cowork to write |
+| **X-b3 MUST SET THE COMPAT REDIRECT URLS.** A compat checkout currently sets NEITHER `successRedirectUrl` NOR `failureRedirectUrl`, so a buyer's last screen would be Xendit's. `readingUrl` builds `/r/<token>` and a PAIR id there is a reading URL for a non-reading; the right destination is the report page, which does not exist and whose route name is Reyner's. Accepted only because no reader can reach a compat checkout yet | Claude Code, prompt X-b3 |
+| **MIGRATION `0010_pair.sql` APPLIED BY HAND.** Nothing in the repo can report whether it has run, so no commit can close this row - the same owner-held shape this file's design notes log for `0009` | **Reyner** |
 
 **THREE GAPS FOUND WHILE BUILDING TRANCHE 1, recorded here because a gap named only
 in a commit message is a gap nobody reads.** None is a defect in what landed; each is

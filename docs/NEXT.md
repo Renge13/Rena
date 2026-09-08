@@ -235,9 +235,28 @@ The compat report enters the SAME pipeline the mirror uses, as a second instance
 | 0 | `722f5fe` the prompt file alone |
 | 1 | `363f091` `lib/semantic/pair.js` + the `kompatibilitas` glossary section (placeholders only) |
 | 2 | `e4d4b08` the compat renderer prompt, selected by `kind` |
-| 3 | **BLOCKED - no `GEMINI_API_KEY`** |
+| 3 | compat Stage 6 - `both_named` + `reframe_present`, `STAGE6_VERSION` 1.18.0. **UNBLOCKED 2026-09-08**: each shown red on a REAL Gemini render |
 | 4 | `GET /api/pair/[id]/reading` |
-| 5 | waits for Reyner's glossary rulings |
+| 5 | n=10 floor rate - `docs/qa/2026-09-08-compat-renders-n10.md` |
+
+**ALL SIX COMMITS LANDED, PLUS TWO CORRECTIONS.** The glossary was re-keyed by VARIANT rather than
+by fact id (Cowork's error: the floor picks text by relation, so one cell per fact would have made a
+clashed seat and a harmonised seat read identically), and Reyner's 24 cells were applied with
+`--expect 46`, clean on the first run.
+
+**X-b3'S FLOOR-RATE PRECONDITION IS NOT MET: 2/10 = 20% against the mirror's ruled 10%.** Nothing
+was loosened to move it. The cause is one check - `style.tension_collapse` is 16 of 18 rejections -
+and it is a DOMAIN COLLISION rather than a model failure: it bans `selaras`, `saling melengkapi`,
+`menyatu`, which are the ordinary Indonesian for what P3 states as a fact. **Three options are put
+to Reyner in the QA doc and none was taken.**
+
+**TWO OPEN GAPS FROM THIS TRANCHE, both owed:**
+1. **THE FLOOR NAMES NEITHER PERSON.** No ruled cell opens a pair reading, and
+   `RENDER_COPY.floorIdentity` is a single-subject sentence; naming both needs a connective, which
+   is Reyner's. `both_named` is therefore exempt on the floor - measured, because a HARD check
+   there made every pair 503 the moment the provider failed. One ruled opening cell closes both.
+2. **`blocklist.json#verdict` is EMPTY.** `no_verdict` logs and rejects nothing until Reyner rules
+   the Indonesian constructions. Adding a rejecting pattern bumps `STAGE6_VERSION` again, alone.
 
 **COMMIT 3 IS BLOCKED AND WAS NOT STUBBED.** Its three Stage 6 checks - `both_named`,
 `no_verdict`, `reframe_present` - may not be cited as protection until each has been shown red

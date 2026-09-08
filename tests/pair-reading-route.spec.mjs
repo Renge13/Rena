@@ -6,28 +6,22 @@
 // provider calls" is asserted against a stub that THROWS if touched rather than
 // against the absence of a key - which would make it vacuously true.
 //
-// ══ THE STATE THIS FILE DOCUMENTS ══════════════════════════
-// **A pair reading cannot be served today**, and that is measured rather than
-// assumed. `GLOSSARY.kompatibilitas` is entirely `@@UNRULED@@` placeholders, and
-// the deterministic floor is assembled out of those very strings, so a floor
-// carries `@@UNRULED: kompat_*@@` in its prose.
+// ══ THE FLOOR IS SERVABLE NOW, AND IT WAS NOT AN HOUR AGO ══
+// Reyner's 24 `kompatibilitas` cells were applied on 2026-09-08. Before that the
+// floor was assembled out of `@@UNRULED: kompat_*@@` placeholders and could not
+// be served at all; this file asserted the refusal. It now asserts the serve.
 //
-// ── TWO GUARDS, AND WHICH ONE FIRES HAS ALREADY MOVED ONCE ──
-// The first version of this file asserted the mirror's floor gate would refuse
-// it. At that point it did NOT: both findings on the pair floor were SOFT, and
-// soft findings keep serving by design, so the floor would have been served at
-// HTTP 200 to someone who had paid. `lib/pair/serveReading.js` therefore carries
-// a SECOND serve-boundary refusal - a sentinel in prose is never servable.
+// THE TWO GUARDS THAT STOOD IN THE WAY ARE BOTH STILL ARMED, and that is what
+// the last test here is for. Neither was deleted for going quiet:
 //
-// After the 2026-09-08 variant restructure the floor ALSO hard-fails
-// `fact.condition_named`, so `floorRefusalReason` now catches it first and the
-// sentinel guard is the second line rather than the only one. Both must keep
-// working, and the sentinel guard is the one that survives the rulings landing,
-// so the test below accepts either reason and says why.
-//
-// So the tests below assert the endpoint's STRUCTURE - the gate, the pipeline
-// wiring, rule 16 - and the 503 is asserted as a documented state with its cause
-// named, not worked around with a fixture that pretends the glossary is ruled.
+//   1. `floorRefusalReason` - the mirror's policy, imported. It hard-failed on
+//      the placeholder floor and, later, on `fact.condition_named` when
+//      `p0_names` had no cell. Both causes are gone; the policy is not.
+//   2. The SENTINEL guard in `lib/pair/serveReading.js`. It exists because at one
+//      point the placeholder floor produced only SOFT findings, so
+//      `floorRefusalReason` returned null and a paying customer would have
+//      received a page of `@@UNRULED@@` at HTTP 200. It is unreachable today and
+//      it is the one that guards the NEXT unruled cell.
 // ============================================================
 
 import assert from 'node:assert/strict';
@@ -72,13 +66,22 @@ function stubFailingProvider() {
 }
 
 beforeEach(() => {
+  // A DUMMY KEY, the pattern tests/mirror-route.spec.mjs uses at its line 132.
+  // Without it `geminiConfigured()` is false, the chain SKIPS the provider
+  // entirely and drops straight to the floor - so a stubbed fetch is never
+  // called and every 'the provider was offered X' assertion is vacuous. That is
+  // exactly what happened on the first run of these two tests.
+  process.env.GEMINI_API_KEY = 'test-key-never-sent-anywhere';
   pairMem.clear();
   __clearMemCache();
   __clearMemRateLimit();
   realFetch = globalThis.fetch;
   fetchCalls = 0;
 });
-afterEach(() => { globalThis.fetch = realFetch; });
+afterEach(() => {
+  globalThis.fetch = realFetch;
+  delete process.env.GEMINI_API_KEY;
+});
 
 const newPair = async (paid = false) => {
   const id = `pair-${Math.random().toString(36).slice(2, 10)}`;
@@ -118,47 +121,82 @@ test('UNPAID SERVES NO PROSE, and does not even START a render', async () => {
   assert.equal(fetchCalls, 0, 'THE PROVIDER WAS NEVER CALLED');
 });
 
-test('THE FLOOR IS TOO BROKEN TO SERVE, and the endpoint 503s rather than shipping placeholders', async () => {
-  // The state this whole file documents. Every provider call fails, the chain
-  // exhausts onto the module-assembly floor, and the floor is built from unruled
-  // glossary strings - so it hard-fails Stage 6 and a 503 is the honest answer.
+test('A PAID PAIR NOW SERVES A FLOOR, and there is no sentinel in it', async () => {
+  // Every provider call fails, the chain exhausts onto the module-assembly
+  // floor, and the floor is now built from Reyner's ruled cells - so it is
+  // served rather than refused. This is the assertion that inverted when the
+  // rulings landed.
   stubFailingProvider();
   const id = await newPair(true);
 
   const res = await servePairReading(request(), id);
-  assert.equal(res.status, 503);
+  assert.equal(res.status, 200, 'served, not refused');
   const body = await res.json();
-  // EITHER refusal is correct and which one fires moved with the 2026-09-08
-  // variant restructure: the floor now HARD-fails 'fact.condition_named' as well,
-  // so floorRefusalReason catches it first. Before the restructure both findings
-  // were soft and only the sentinel guard stood between a paying customer and a
-  // page of placeholders. Both are asserted because both must keep working - the
-  // sentinel guard is the one that survives the rulings landing.
-  assert.match(body.error, /^(unruled_content_in_reading|floor_failed_gate:)/u);
+
+  assert.equal(body.status, 'paid');
+  assert.equal(body.served_from, 'floor');
+  assert.ok(body.reading.blocks.length > 0, 'there is prose');
+  // NO PENUTUP, and that is the MIRROR's behaviour too rather than a pair gap:
+  // `assembleFallback` returns `penutup: ""` for both kinds. The floor assembles
+  // ruled glossary strings and a closing verdict is not one of them - writing one
+  // would be authoring. Checked against the mirror before asserting it here.
+  assert.equal(body.reading.penutup, '', 'the floor closes with nothing, as the mirror does');
+
+  const raw = JSON.stringify(body);
+  assert.ok(!raw.includes('@@UNRULED'), 'NO SENTINEL reaches the customer');
+  assert.ok(fetchCalls > 0, 'and the chain really did try the provider first');
 });
 
-test('THE CAUSE IS THE UNRULED GLOSSARY, measured here rather than asserted', async () => {
-  // Pinning the CAUSE separately from the symptom, so the day Reyner rules the
-  // glossary this test tells whoever is reading exactly which half changed.
-  const sj = buildPairSemantic(
-    calculateBaziChart(A),
-    calculateBaziChart(B),
-  );
+test('THE FLOOR PASSES STAGE 6, which is what makes it servable', async () => {
+  // Pinning the CAUSE separately from the symptom, the same way this file did
+  // when the cause was the opposite. Before the rulings this assertion read
+  // `gate.ok === false`; it is the one line that tells a later reader which half
+  // of the system changed.
+  const sj = buildPairSemantic(calculateBaziChart(A), calculateBaziChart(B));
   const floor = assembleFallback(sj);
 
-  assert.ok(
-    JSON.stringify(floor.blocks).includes('@@UNRULED'),
-    'the floor is assembled out of the placeholders',
-  );
+  assert.ok(!JSON.stringify(floor.blocks).includes('@@UNRULED'), 'the cells are ruled');
 
   const gate = validateRendering(
     { blocks: floor.blocks, penutup: 'Peta ini sudah cukup jelas untuk kamu jalani mulai sekarang.' },
     sj,
     { provider: 'module_assembly' },
   );
-  assert.equal(gate.ok, false);
-  const codes = new Set(gate.findings.map((f) => f.code ?? f.check));
-  assert.ok(codes.has('style.code_leak'), 'the placeholders read as code, correctly');
+  assert.equal(gate.hard, false, 'no HARD finding');
+  assert.equal(gate.ok, true, 'the floor passes the gate every output has to pass');
+});
+
+test('NO SENTINEL CAN REACH THE CLIENT, by either of two mechanisms', async () => {
+  // The invariant, asserted on the OUTCOME rather than on a status code, because
+  // measuring it showed the two guards fire in the opposite order to what I
+  // assumed. Handing the chain a response that carries a sentinel does NOT reach
+  // `serveReading.js`'s refusal: Stage 6's own `style.code_leak` rejects it
+  // first, the chain regenerates, and the floor is served clean at 200.
+  //
+  // So the serve-boundary guard is DEFENCE IN DEPTH behind Stage 6, not the
+  // first line. It is kept for the case Stage 6 cannot see - a sentinel that
+  // survives the style check - and it is unreachable today. What must hold
+  // either way is this: whatever the provider returns, no `@@UNRULED@@` reaches
+  // the customer.
+  const id = await newPair(true);
+  const sj = buildPairSemantic(calculateBaziChart(A), calculateBaziChart(B));
+  const poisoned = {
+    blocks: assembleFallback(sj).blocks.map((b, i) => (
+      i === 0 ? { ...b, text: `${b.text} @@UNRULED: kompat_fake@@` } : b
+    )),
+    penutup: 'Peta ini sudah cukup jelas untuk kamu jalani mulai sekarang.',
+  };
+  globalThis.fetch = async () => {
+    fetchCalls += 1;
+    return Response.json({
+      candidates: [{ content: { parts: [{ text: JSON.stringify(poisoned) }] }, finishReason: 'STOP' }],
+    });
+  };
+
+  const res = await servePairReading(request(), id);
+  const raw = await res.text();
+  assert.ok(!raw.includes('@@UNRULED'), 'no sentinel in the response, whatever the status');
+  assert.ok(fetchCalls > 0, 'and the poisoned response really was offered');
 });
 
 test('RULE 16: a floor is NEVER persisted', async () => {
@@ -216,6 +254,11 @@ test('NO PROVIDER IS CONFIGURED HERE, and that is why commit 3 is BLOCKED', () =
   // chain skips the provider entirely and goes straight to the floor - so no
   // Gemini output exists to show a new Stage 6 check rejecting, which is exactly
   // what prompt X-b2 requires before such a check may be cited as protection.
+  // Read OUTSIDE the beforeEach's dummy key: this asks about the developer's own
+  // environment, not the test harness's. `.env.local` is not loaded by plain
+  // node, so a key living there does not make this true either - commit 3's real
+  // render loads it explicitly.
+  delete process.env.GEMINI_API_KEY;
   assert.equal(geminiConfigured(), false,
-    'if this ever fails locally, commit 3 is unblocked and should be done');
+    'the TEST env never carries a real key; commit 3 loads .env.local explicitly');
 });

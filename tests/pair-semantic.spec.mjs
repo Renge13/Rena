@@ -20,6 +20,7 @@ import { buildSemanticJson } from '../lib/semantic/index.js';
 import { buildPairSemantic } from '../lib/semantic/pair.js';
 import { GLOSSARY } from '../lib/semantic/glossary.js';
 import { assembleFallback } from '../lib/render/fallback.js';
+import { validateRendering } from '../lib/validate/index.js';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { VALIDATION_CHARTS, HOUR_UNKNOWN_CHARTS } from './bazi-validation.fixture.js';
@@ -36,6 +37,9 @@ const pair = (x, y) => buildPairSemantic(chart(x), chart(y));
 // Quadrant coverage under the V6 rule (run 3, 2026-09-08), hand-derived in
 // tests/compat-pull-fit.spec.mjs: q1 = 2 x 6, q2 = 1 x 12, q3 = 3 x 7, q4 = 1 x 3.
 const BY_QUADRANT = { q1: [2, 6], q2: [1, 12], q3: [3, 7], q4: [1, 3] };
+
+// The construction tests/stage6-validation.spec.mjs uses for a passing penutup.
+const PENUTUP = 'Peta ini sudah cukup jelas untuk kamu jalani mulai sekarang.';
 
 test('kind is present on BOTH builders, and they differ', () => {
   // The one field every consumer branches on. Without it the two cache-key
@@ -214,20 +218,56 @@ test('THE SECTION IS KEYED BY VARIANT, and its shape is the rulings file\'s', ()
   assert.equal('quadrant' in GLOSSARY.kompatibilitas, false, 'quadrant.* folded into p5_q*');
 });
 
-test('every fact resolves a REAL cell, and each is still a placeholder', () => {
+test('THERE IS NO p0_names FACT, and the reason is recorded', () => {
+  // Dropped 2026-09-08 when the rulings landed. Three reasons, all in
+  // lib/semantic/pair.js: no opening cell was ruled; a fact with `entry: null`
+  // has `label: null`, which the glossary reserves for CONDITIONS, so the floor's
+  // identity clause tripped `fact.condition_named` as a HARD finding; and
+  // `RENDER_COPY.floorIdentity` is a single-subject sentence that could only ever
+  // have named one of the two people.
+  //
+  // The opening obligation is unaffected: both names are in `core`, the compat
+  // prompt requires them in the first block, and `both_named` enforces it.
+  const pj = pair(1, 2);
+  assert.equal(pj.facts.some((f) => f.id === 'p0_names'), false);
+  assert.ok(pj.core.a.archetype_name_id, 'A is named in core');
+  assert.ok(pj.core.b.archetype_name_id, 'and B is');
+  assert.notEqual(pj.core.a.archetype_name_id, pj.core.b.archetype_name_id);
+});
+
+test('THE FLOOR PASSES STAGE 6 ON EVERY QUADRANT, with no sentinel in it', () => {
+  // The whole point of the rulings landing. Before them the floor carried
+  // `@@UNRULED: kompat_*@@` and hard-failed; this is the assertion that says the
+  // deterministic floor is now servable, which is what rule 17 requires of it.
+  for (const [quadrant, [x, y]] of Object.entries(BY_QUADRANT)) {
+    const pj = pair(x, y);
+    const floor = assembleFallback(pj);
+    assert.ok(!JSON.stringify(floor.blocks).includes('@@UNRULED'), `${quadrant}: no sentinel`);
+
+    const gate = validateRendering(
+      { blocks: floor.blocks, penutup: PENUTUP },
+      pj,
+      { provider: 'module_assembly' },
+    );
+    assert.equal(gate.hard, false, `${quadrant}: no HARD finding on the floor`);
+    assert.equal(gate.ok, true, `${quadrant}: the floor passes`);
+  }
+});
+
+test('every fact resolves a RULED cell', () => {
   // A missing key would surface as a silently empty floor block, so pair.js
   // throws on one. This exercises the mapping across pairs that reach different
   // variants rather than trusting the table by reading it.
   for (const [x, y] of [[1, 2], [1, 12], [2, 6], [3, 7], [1, 3], [1, 101]]) {
     const pj = pair(x, y);
+    assert.ok(pj.facts.length > 0, 'precondition: there are facts');
     for (const f of pj.facts) {
-      if (f.id === 'p0_names') {
-        // No cell BY DESIGN: both names come from `arketipe`, already ruled.
-        assert.ok(f.archetype?.name_id, 'p0_names carries A\'s archetype');
-        assert.ok(f.archetype_b?.name_id, 'and B\'s');
-        continue;
-      }
-      assert.ok(f.label_meaning?.includes('@@UNRULED'), `${x}x${y} ${f.id} resolved a placeholder cell`);
+      // EVERY fact resolves a cell now - `p0_names` was dropped, because no
+      // opening cell was ruled and a fact with no cell hard-failed the floor.
+      assert.ok(f.label_meaning, `${x}x${y} ${f.id} resolved a cell`);
+      assert.ok(!f.label_meaning.includes('@@UNRULED'),
+        `${x}x${y} ${f.id} carries RULED text, not a placeholder`);
+      assert.equal(f.glossary_gap, undefined, `${x}x${y} ${f.id} is not a gap`);
     }
   }
 });

@@ -107,18 +107,22 @@ test('every required slot exists and is a non-empty string', () => {
   }
 });
 
-test('COMPAT_COPY carries its one slot, and it is deliberately UNRULED', () => {
+test('COMPAT_COPY carries its one slot, and it is RULED', () => {
+  // INVERTED 2026-09-08, which is what the previous version of this test told the
+  // next session to do: it asserted the slot must STAY a sentinel until Reyner
+  // ruled it, and said "when he does, this assertion is the one to invert, and
+  // the gate tests below will follow it". He ruled it. They did.
+  //
   // The compat invoice description is the Xendit checkout line AND the buyer's
-  // bank statement line, so rule 20 makes it chrome and Reyner's alone. It ships
-  // as a sentinel ON PURPOSE and a production build refuses while it does - the
-  // conditional gate tests below assert that refusal against an independent
-  // count, so this test only has to pin that the slot exists and is stubbed.
-  assert.equal(typeof COMPAT_COPY.invoiceDesc, 'string');
-  assert.ok(
-    COMPAT_COPY.invoiceDesc.includes(SENTINEL),
-    'invoiceDesc must stay a sentinel until Reyner rules it; when he does, this '
-    + 'assertion is the one to invert, and the gate tests below will follow it',
-  );
+  // bank statement line, so rule 20 makes it chrome: keyboard characters only,
+  // one composed voice. Same form as the artifact's approved `Katon - Complete
+  // Edition`, so the two read alike on a statement.
+  assert.equal(COMPAT_COPY.invoiceDesc, 'Katon - Compatibility Reading');
+  assert.ok(!COMPAT_COPY.invoiceDesc.includes(SENTINEL), 'no sentinel survives');
+
+  // Rule 20 on the string itself, not on the promise that someone checked it.
+  assert.ok(!/[—–‘’“”…]/u.test(COMPAT_COPY.invoiceDesc),
+    'keyboard characters only: no em-dash, en-dash, curly quote or ellipsis');
 });
 
 test('no price is hardcoded into the compat copy bank either', () => {
@@ -136,13 +140,38 @@ test('no price is hardcoded into the copy bank', () => {
     'a price-shaped number is in UPCOMING_COPY; resolve it from lib/pricing.js instead');
 });
 
-test('the production gate is wired into prebuild', () => {
+test('the production gate is wired into prebuild AND VERCEL ACTUALLY INVOKES IT', () => {
+  // ── THIS TEST WAS WRONG FROM 2026-08-29 TO 2026-09-08 ─────
+  // It asserted only that `package.json` defines a `prebuild` script, and stated
+  // the other half in a COMMENT as though it were a checked fact: *"Vercel's
+  // build command is `npm run build`"*. **It was not.** `vercel.json` has said
+  // `"buildCommand": "next build"` since `8953008` (2026-07-07), which predates
+  // this gate entirely - and `prebuild` is an npm LIFECYCLE hook. It runs before
+  // `npm run build`. It does not run before `next build`.
+  //
+  // So the gate never executed on a single Vercel deploy, and this test stayed
+  // green throughout, because it checked THAT THE SCRIPT EXISTED rather than THAT
+  // THE PLATFORM INVOKED IT. Found 2026-09-08, when a production deploy that
+  // should have been refused succeeded and served a live `@@UNRULED@@` invoice
+  // description.
+  //
+  // The lesson is not "add a line". A guard's wiring has TWO ends, and the end
+  // this repo can see - its own package.json - is not the end that decides
+  // whether the guard runs.
   const pkg = JSON.parse(readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
-  // `prebuild` and not a CI step: npm runs it before `build` with nothing to
-  // remember, and Vercel's build command is `npm run build`.
   assert.ok(pkg.scripts?.prebuild, 'package.json must define a prebuild script');
   assert.match(pkg.scripts.prebuild, /check-unruled-copy\.mjs/,
     'prebuild must invoke the unruled-copy gate');
+
+  // THE HALF THAT WAS MISSING. `next build` skips every npm lifecycle hook, so
+  // the build command must go through npm for `prebuild` to fire at all.
+  const vercel = JSON.parse(readFileSync(path.join(ROOT, 'vercel.json'), 'utf8'));
+  assert.equal(
+    vercel.buildCommand, 'npm run build',
+    'vercel.json buildCommand must be exactly "npm run build": `next build` skips '
+    + 'npm lifecycle hooks, so `prebuild` - and therefore the unruled-copy gate - '
+    + 'never runs. That was true on every deploy from 2026-08-29 to 2026-09-08.',
+  );
 });
 
 /**

@@ -43,8 +43,9 @@ test('STAGE6_VERSION moved, once, for this commit', () => {
   // The repo convention: a change to what Stage 6 ACCEPTS OR REJECTS bumps this
   // in the same commit. Two rejecting checks were added, so it moves once - not
   // twice, and not zero times.
-  // 1.19.0: tension_collapse scoped per block for a pair (Reyner, 2026-09-08).
-  assert.equal(STAGE6_VERSION, '1.19.0');
+  // 1.20.0: both_named's floor exemption removed, now that p0_opening is ruled
+  // and the floor names both people (Reyner, 2026-09-08 evening).
+  assert.equal(STAGE6_VERSION, '1.20.0');
 });
 
 test('THE MIRROR IS UNTOUCHED: pairGuard returns [] for kind mirror', () => {
@@ -71,45 +72,82 @@ test('both_named REJECTS a model render that names only one person', () => {
   const ok = renderingFor(sj, (b, i) => (i === 0
     ? { ...b, text: `${nameA} dan ${nameB}. ${b.text}` } : b));
   assert.equal(
-    codes(pairGuard(ok, sj, JSON.stringify(ok), 'gemini')).includes('pair.both_named'),
+    codes(pairGuard(ok, sj, JSON.stringify(ok))).includes('pair.both_named'),
     false,
   );
 
   // One name missing is the same finding as both missing - deliberately, so a
   // fix cannot add the cheaper of the two.
+  //
+  // THE OPENING IS REPLACED, NOT PREFIXED, since 2026-09-08: the floor's own
+  // opening now carries both names (p0_opening), so prefixing one name to it left
+  // a fixture that named BOTH and the assertion could not fail. Caught by running
+  // it - the fixture had quietly stopped expressing the proposition.
   for (const named of [nameA, nameB]) {
-    const one = renderingFor(sj, (b, i) => (i === 0 ? { ...b, text: `${named}. ${b.text}` } : b));
-    const found = pairGuard(one, sj, JSON.stringify(one), 'gemini');
+    const one = renderingFor(sj, (b, i) => (i === 0 ? { ...b, text: `${named} membuka bacaan ini.` } : b));
+    const found = pairGuard(one, sj, JSON.stringify(one));
     assert.ok(codes(found).includes('pair.both_named'), `naming only ${named} is rejected`);
     assert.equal(found.find((f) => f.code === 'pair.both_named').severity, 'hard');
   }
 });
 
-test('both_named DOES NOT run on the floor, and that is a content gap', () => {
-  // The floor cannot name both: `RENDER_COPY.floorIdentity` is a single-subject
-  // sentence and no ruled cell opens a pair reading. A HARD check on the floor
-  // would make every pair 503 the moment the provider failed - rule 17's
-  // always-available floor, unavailable.
-  //
-  // THIS TEST IS ALSO THE RECORD OF THE GAP. When a ruled opening cell lands,
-  // the exemption goes and this test inverts.
+test('THE FLOOR NAMES BOTH PEOPLE, so both_named now runs on it too', () => {
+  // ── THIS TEST INVERTED, AS ITS PREVIOUS VERSION SAID IT WOULD ──
+  // It used to read "both_named DOES NOT run on the floor, and that is a content
+  // gap", and it asserted the exemption plus the precondition that made the
+  // exemption necessary: the floor genuinely did not name both people, because no
+  // ruled cell opened a pair reading. Reyner ruled kompatibilitas.p0_opening on
+  // 2026-09-08 and the gap closed, so the exemption went with it.
   const sj = buildPairSemantic(A, HARD_SEAT);
   const floor = renderingFor(sj);
+  const nameA = sj.core.a.archetype_name_id;
+  const nameB = sj.core.b.archetype_name_id;
 
-  assert.ok(
-    codes(pairGuard(floor, sj, JSON.stringify(floor), 'gemini')).includes('pair.both_named'),
-    'precondition: the floor genuinely does NOT name both, so the exemption is load-bearing',
-  );
+  // The opening block is the one that changed. It is the FLOOR's own prose, from
+  // Reyner's ruled template - nothing here was authored to make a test pass.
+  assert.ok(floor.blocks[0].text.includes(nameA), 'the floor opening names A');
+  assert.ok(floor.blocks[0].text.includes(nameB), 'and B');
+
+  // THE PARAMETER IS GONE FROM THE CONTRACT, not just unread. A guard that still
+  // ACCEPTS a provider is one edit away from branching on it again.
+  assert.equal(pairGuard.length, 3, 'pairGuard no longer takes a provider');
   assert.equal(
-    codes(pairGuard(floor, sj, JSON.stringify(floor), 'module_assembly')).includes('pair.both_named'),
+    codes(pairGuard(floor, sj, JSON.stringify(floor))).includes('pair.both_named'),
     false,
-    'and the floor is exempt',
+    'the floor names both, so nothing is found',
   );
 
-  // The consequence that matters: the floor still passes the gate, so it is
-  // servable.
+  // And through the real door, for BOTH providers, which is where the exemption
+  // used to live.
+  for (const provider of ['module_assembly', 'gemini']) {
+    const g = validateRendering(floor, sj, { provider });
+    assert.equal(codes(g.findings).includes('pair.both_named'), false, `clean for ${provider}`);
+  }
+
+  // Rule 17's floor is still servable, which is the thing the exemption was
+  // protecting and is now protected by the content instead.
   const gate = validateRendering(floor, sj, { provider: 'module_assembly' });
   assert.equal(gate.hard, false, 'the floor carries no HARD finding');
+  assert.equal(gate.ok, true, 'the floor passes');
+});
+
+test('A FLOOR THAT LOST THE OPENING IS REJECTED, provider notwithstanding', () => {
+  // The check must be able to FAIL on the floor now, or removing the exemption
+  // bought nothing. Strip the opening block's names the way a future edit to
+  // fallback.js or to the cell could.
+  const sj = buildPairSemantic(A, HARD_SEAT);
+  const floor = renderingFor(sj);
+  const stripped = {
+    ...floor,
+    blocks: floor.blocks.map((b, i) => (i === 0 ? { ...b, text: 'Bacaan ini tentang kalian.' } : b)),
+  };
+  const found = pairGuard(stripped, sj, JSON.stringify(stripped));
+  assert.ok(codes(found).includes('pair.both_named'));
+  assert.equal(found.find((f) => f.code === 'pair.both_named').severity, 'hard');
+  // Through the real door too, on the FLOOR's provider - the path the exemption
+  // used to make unreachable.
+  const gate = validateRendering(stripped, sj, { provider: 'module_assembly' });
+  assert.equal(gate.hard, true, 'a floor that lost the opening is HARD-rejected');
 });
 
 test('reframe_present REJECTS a difficult seat whose block drops the reframe', () => {
@@ -119,7 +157,7 @@ test('reframe_present REJECTS a difficult seat whose block drops the reframe', (
   // The floor carries the reframe verbatim, so it passes.
   const carried = renderingFor(sj);
   assert.equal(
-    codes(pairGuard(carried, sj, JSON.stringify(carried), 'gemini')).includes('pair.reframe_missing'),
+    codes(pairGuard(carried, sj, JSON.stringify(carried))).includes('pair.reframe_missing'),
     false,
   );
 
@@ -132,7 +170,7 @@ test('reframe_present REJECTS a difficult seat whose block drops the reframe', (
     ...carried,
     blocks: carried.blocks.map((b, i) => (i === idx ? { ...b, text: donor } : b)),
   };
-  const found = pairGuard(dropped, sj, JSON.stringify(dropped), 'gemini');
+  const found = pairGuard(dropped, sj, JSON.stringify(dropped));
   assert.ok(codes(found).includes('pair.reframe_missing'));
   assert.equal(found.find((f) => f.code === 'pair.reframe_missing').severity, 'hard');
 });
@@ -144,7 +182,7 @@ test('reframe_present is SILENT when the seat is easy', () => {
   assert.equal(sj.safety_flags.includes('p2_reframe_required'), false);
   const rendered = renderingFor(sj);
   assert.equal(
-    codes(pairGuard(rendered, sj, JSON.stringify(rendered), 'gemini')).includes('pair.reframe_missing'),
+    codes(pairGuard(rendered, sj, JSON.stringify(rendered))).includes('pair.reframe_missing'),
     false,
   );
 });
@@ -171,7 +209,7 @@ test('no_verdict SHIPS WITH NO PATTERNS, and its reader is not broken', () => {
   const sj = buildPairSemantic(A, HARD_SEAT);
   const rendered = renderingFor(sj);
   assert.equal(
-    codes(pairGuard(rendered, sj, 'cocok sekali 95%', 'gemini')).includes('pair.verdict'),
+    codes(pairGuard(rendered, sj, 'cocok sekali 95%')).includes('pair.verdict'),
     false,
     'with no patterns it rejects nothing, whatever the text',
   );

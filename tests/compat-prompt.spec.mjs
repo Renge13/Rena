@@ -56,6 +56,34 @@ test('selection is BY KIND, and an unknown kind throws rather than defaulting', 
   assert.throws(() => promptVersionFor('nope'), /no prompt version for kind/u);
 });
 
+test('THE PENUTUP CLOSES ON THE ASKS, and may not summarise the pairing', () => {
+  // ── THIS IS A CAUSE REMOVAL, NOT A STYLE PREFERENCE ────────
+  // The previous instruction read "penutup closes with what this pairing IS,
+  // plainly ... It describes the dynamic between them" - a request for exactly
+  // the whole-relationship characterisation that reaches for harmony vocabulary.
+  // Measured: 4 of 4 real renders closed on "saling melengkapi" and were
+  // rejected by style.tension_collapse, which made that check 89% of all
+  // rejections at n=10. Reyner ruled the instruction changed rather than the
+  // gate loosened (2026-09-08).
+  //
+  // Asserted on the PROMPT TEXT because that is the artifact that ships. The
+  // effect on real renders is measured in docs/qa/, not here.
+  assert.match(COMPAT_PROMPT, /penutup closes on WHAT THIS RELATIONSHIP ASKS OF EACH PERSON/u);
+  assert.match(COMPAT_PROMPT, /penutup does NOT characterise the pairing as a whole/u);
+  assert.match(COMPAT_PROMPT, /penutup restates nothing from P1 to P5/u);
+
+  // The old instruction is GONE, not merely outweighed by a new one. A prompt
+  // that says both things is a prompt that says neither - audit row 1's shape.
+  assert.equal(COMPAT_PROMPT.includes('closes with what this pairing IS'), false);
+  assert.equal(COMPAT_PROMPT.includes('It describes the dynamic between them'), false);
+
+  // And the mirror's own penutup instruction is untouched: this prompt is
+  // composed from the mirror's bytes for the SHARED sections only, and the
+  // output format is not one of them.
+  const mirror = readFileSync(path.join(ROOT, 'docs', 'content', 'renderer-prompt.txt'), 'utf8');
+  assert.equal(mirror.includes('WHAT THIS RELATIONSHIP ASKS OF EACH PERSON'), false);
+});
+
 test('THE SHARED SECTIONS ARE VERBATIM, byte for byte', () => {
   // Not "the pair prompt mentions the golden rules" - the mirror's own bytes.
   const raw = readFileSync(path.join(ROOT, 'docs', 'content', 'renderer-prompt.txt'), 'utf8')
